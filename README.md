@@ -16,6 +16,10 @@ pip install -U infrable  # requires python >= 3.10
    5. [Chapter 4 - The Deploy or Recover Workflow](#chapter-4---the-deploy-or-recover-workflow)
       1. [Deploy workflow](#deploy-workflow)
       2. [Recover workflow](#recover-workflow)
+   6. [Chapter 5 - Commands and Tasks](#chapter-5---commands-and-tasks)
+   7. [Chapter 6 - Environments and switches](#chapter-6---environments-and-switches)
+   8. [Chapter 6 - Meta and Secrets](#chapter-6---meta-and-secrets)
+   9. [Chapter 7 - The Python Shell](#chapter-7---the-python-shell)
 
 ### Preface
 
