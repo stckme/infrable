@@ -4,7 +4,7 @@ from typing import Any
 from typer import Typer
 
 from infrable import errors, paths
-from infrable.util import template
+from infrable.util import formatter
 
 
 @dataclass(unsafe_hash=True, order=True, eq=True)
@@ -42,7 +42,7 @@ class Switch:
         raise errors.SwitchValueError(self.path, value=value, options=self.options)
 
     def format(self, name: str, format) -> str:
-        return template(format).render(name=name, **asdict(self))
+        return formatter(format).render(name=name, **asdict(self))
 
     def __str__(self) -> str:
         return self()

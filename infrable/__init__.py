@@ -7,3 +7,4 @@ from infrable.meta import Meta
 from infrable.readfile import readfile
 from infrable.service import Service
 from infrable.switch import Switch
+from infrable.util import parallel

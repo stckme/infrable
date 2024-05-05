@@ -2,59 +2,63 @@
 
 Hanny's legendary infrastructure as code solution.
 
+[![PyPI version](https://img.shields.io/pypi/v/expandvars.svg)](https://pypi.org/project/expandvars)
+
 ```bash
+# Install
 pip install -U infrable  # requires python >= 3.10
+
+# Bootstrap a new project
+touch init.py
+infrable init
 ```
 
 # Table of contents
 
-1. [Infrable](#infrable)
-   1. [Preface](#preface)
-   2. [Chapter 1 - Chaos](#chapter-1---chaos)
-   3. [Chapter 2 - Hosts and services](#chapter-2---hosts-and-services)
-   4. [Chapter 3 - Templates](#chapter-3---templates)
-   5. [Chapter 4 - The Deploy or Recover Workflow](#chapter-4---the-deploy-or-recover-workflow)
-      1. [Deploy workflow](#deploy-workflow)
-      2. [Recover workflow](#recover-workflow)
-   6. [Chapter 5 - Commands and Tasks](#chapter-5---commands-and-tasks)
-   7. [Chapter 6 - Environments and switches](#chapter-6---environments-and-switches)
-   8. [Chapter 6 - Meta and Secrets](#chapter-6---meta-and-secrets)
-   9. [Chapter 7 - The Python Shell](#chapter-7---the-python-shell)
+1. [Prologue](#prologue)
+2. [Chapter 1 - Chaos](#chapter-1---chaos)
+3. [Chapter 2 - Hosts and Services](#chapter-2---hosts-and-services)
+4. [Chapter 3 - Templates](#chapter-3---templates)
+5. [Chapter 4 - The Deploy or Recover Workflow](#chapter-4---the-deploy-or-recover-workflow)
+6. [Chapter 5 - Commands, Tasks and Workflows](#chapter-5---commands,-tasks-and-workflows)
+7. [Chapter 6 - Environments and Switches](#chapter-6---environments-and-switches)
+8. [Chapter 7 - Meta and Secrets](#chapter-7---meta-and-secrets)
+9. [Chapter 8 - Going beyond with Custom Modules](#chapter-8---going-beyond-with-custom-modules)
 
-### Preface
+## Prologue
 
 In an infinite void surrounded by blinking lights, Hanny woke up with her memory hollow,
 only her name echoing in the dark corners of her mind. She found herself floating in a
-realm between the tangible world of Python code and the ethereal cosmos of the space. A
-synthetic voice resonated around her about a crucial **infrastructure migration project**
-but it was all Greek to her. Her memory, once the key to the **Python** kingdom, failed to
+realm between the tangible world of **Python** code and the ethereal cosmos of the space. A
+synthetic voice resonated around her about a crucial **infrastructure** migration project
+but it was all Greek to her. Her memory, once the key to the Python kingdom, failed to
 provide any answers. She was stuck in an interstellar labyrinth, entrusted with a
 technology mission she could not recall, her only anchors being a mechanical keyboard and
 lines of code whizzing past on the nearby screen.
 
-### Chapter 1 - Chaos
+## Chapter 1 - Chaos
 
 In the void of her discontent, Hanny started to recall fragments of a past life: back on
 Earth, where a looming infrastructure migration project threatened to upend everything.
-Humanity grappled with a **chaotic infrastructure** and an ill-prepared toolkit. Python
+Humanity grappled with a **chaotic infrastructure** and an **ill-prepared toolkit**. Python
 developers fought with convoluted tools, while the desperate search for **declarative
 configuration management** proved futile. Amidst this disarray, Hanny was catapulted into
 the cosmos, a reluctant knight tasked with an unenviable quest: to find an
 **uncomplicated yet competent solution** capable of taming this looming catastrophe.
 
-### Chapter 2 - Hosts and services
+## Chapter 2 - Hosts and Services
 
 In a moment of revelation, Hanny grasped the intricacies of infrastructure: **hosts and the
 services** they housed, the vital backbone of any system. She understood the criticality of
 maintaining **a single reference source, a complete, harmonious documentation capturing
 these elemental relationships**. Committing herself to uphold this single source of truth
 principle, she began the painstaking process of documentation, pouring every detail into
-a consolidated testament christened **infra.py**.
+a consolidated testament christened **"infra.py"**.
 
 **infra.py**
 
 ```python
-template_prefix = "https://github.com/username/repo/blob/main"
+from infrable import Host, Service
 
 # Hosts/ -----------------------------------------------------------------------
 dev_host = Host(fqdn="dev.example.com", ip="127.0.0.1")
@@ -74,17 +78,23 @@ prod_nginx = Service(host=prod_host, port=80)
 # /Services --------------------------------------------------------------------
 ```
 
-### Chapter 3 - Templates
+## Chapter 3 - Templates
 
 Gradually piecing together her fragmented memories, Hanny realized configuration files
 for the host deployments ought to be maintained as **templates, drawing values as
 needed from "infra.py"**. Back on Earth, the challenge had been a lack of a coherent
-system to document the path of these files, a problem of organization that posed a
+system to document the destination of these files, a problem of organization that posed a
 significant hurdle. Then, in a moment of genius, Hanny conceived a groundbreaking
 solution. She'd document the files' path directly within the configuration templates
 themselves. And so, with renewed vigor, she started adding crucial details as **header
 comments nestled within the configuration files**, a legendary stroke promising to
 transform the face of infrastructure migration.
+
+**infra.py**
+
+```python
+template_prefix = "https://github.com/username/repository/blob/main"
+```
 
 **templates/nginx/web.j2**
 
@@ -99,40 +109,56 @@ transform the face of infrastructure migration.
 # ---
 
 server {
-    listen 80;
-    listen [::]:80;
+    listen {{ dev_nginx.port }};
+    listen [::]:{{ dev_nginx.port }}
 
     server_name {{ dev_nginx.host.fqdn }} www.{{ dev_nginx.host.fqdn }};
 
     location / {
-        proxy_pass http://localhost:{{ dev_web.port }};
+        proxy_pass http://127.0.0.1:{{ dev_web.port }};
         include proxy_params;
     }
 }
 ```
 
-### Chapter 4 - The Deploy or Recover Workflow
+NOTE: The `_template.src` is a special variable, available in all templates.
+
+## Chapter 4 - The Deploy or Recover Workflow
 
 In the vast expanse of uncertainty, one thing became crystal clear to Hanny: the
-importance of reviewing the files made through "infra.py" and **comparing these with the
-currently deployed configurations before pushing them**. This process would **intercept
-any live changes and ensure their inclusion in the templates**. Her cautious nature also
+importance of **reviewing the files made through "infra.py" and comparing these with the
+currently deployed configurations before pushing them**. This process would intercept
+any **live changes** and ensure their inclusion in the templates. Her cautious nature also
 recognized the essential function of maintaining **local backups** of the utilized
 configurations, providing an insurance of sorts. To address any complications, she
 conceived a failsafe measure: **The Deploy or Recover Workflow**. It promised relief from
 human error while ensuring an approach to **easily revert and recover** the service,
 another triumphant stride in Hanny’s cosmic saga.
 
-#### Deploy workflow
+Deploy workflow:
 
 ```bash
-infrable files deploy
+infrable files deploy [path]
 
-## same as
-# infrable files gen
+## Same as
+# infrable files gen [path]
 # infrable files pull
 # infrable files backup
 # infrable files push
+```
+
+For snake folks:
+
+```python
+from infrable import files
+
+files.deploy(path)
+
+## Same as
+# files.gen(path)
+# files.pull()
+# files.backup()
+# files.push()
 ```
 
 ```mermaid
@@ -148,14 +174,44 @@ flowchart TD;
     I -- no --> K[skip and delete artifacts];
 ```
 
-#### Recover workflow
+Diff example:
+
+```diff
+--- .infrable/files/root@dev.example.com/etc/monit/conf.d/system.cfg.old
+
++++ .infrable/files/root@dev.example.com/etc/monit/conf.d/system.cfg.new
+
+@@ -1,13 +1,14 @@
+
+ check system dev.example.com
+-    if memory usage > 85% then alert
++    # if memory usage > 85% then alert
+     if cpu usage (user) > 80% for 3 cycles then alert
+     if cpu usage (system) > 80% for 3 cycles then alert
+
+Push? (y, n, all) [y]:
+```
+
+Recover workflow:
 
 ```bash
-infrable files recover
+infrable files recover [path]
 
-## same as
-# infrable files revert
+## Same as
+# infrable files revert [path]
 # infrable files push
+```
+
+For snake folks:
+
+```python
+from infrable import files
+
+files.recover(path)
+
+## Same as
+# files.revert(path)
+# files.push()
 ```
 
 ```mermaid
@@ -165,7 +221,7 @@ flowchart TD;
     B --> C[push: run the steps for the push workflow]
 ```
 
-### Chapter 5 - Commands and Tasks
+## Chapter 5 - Commands, Tasks and Workflows
 
 TODO: Document commands
 
@@ -188,51 +244,67 @@ TODO: Document tasks
 **infra.py**
 
 ```python
-nginx_dev.typer = typer.Typer()
-@nginx_dev.typer.command()
-def reload(test: bool = True):
-    assert nginx.host, "Service must have a host to reload"
-    if test:
-        nginx.host.remote().sudo.nginx("-t")
-    nginx.host.remote().sudo.systemctl.reload.nginx()
+import typer
+
+# Tasks/ -----------------------------------------------------------------------
+dev_nginx.typer = typer.Typer(help="dev_nginx specific tasks.")
+
+@dev_nginx.typer.command(name="reload")
+def reload_dev_nginx():
+    """[TASK] Reload nginx: infrable dev-nginx reload"""
+
+    assert dev_nginx.host, "Service must have a host to reload"
+    dev_nginx.host.remote().sudo.nginx("-t")
+    dev_nginx.host.remote().sudo.systemctl.reload.nginx()
 ```
 
 ```bash
-infrable nginx-dev reload --test
+infrable dev-nginx reload
 ```
 
-Or define a global reload task
+TODO: Document workflows
 
 **infra.py**
 
 ```python
-reload = typer.Typer()
-@reload.command()
-def nginx_dev(test: bool = True):
-    assert nginx.host, "Service must have a host to reload"
-    if test:
-        nginx.host.remote().sudo.nginx("-t")
-    nginx.host.remote().sudo.systemctl.reload.nginx()
+from infrable import parallel, paths
+
+# Workflows/ -----------------------------------------------------------------------
+deploy = typer.Typer(help="Deployment workflows.")
+
+@deploy.command(name="dev-nginx")
+def deploy_dev_nginx():
+    """[WORKFLOW] Deploy dev_nginx files: infrable deploy dev-nginx"""
+
+    files.deploy(paths.templates / "nginx")
+    hosts = files.affected_hosts()
+    cmd = "sudo nginx -t && sudo systemctl reload nginx && echo success || echo failed"
+    tasks = [lambda: (h, h.remote().sudo(cmd)) for h in hosts]
+    for host, result in parallel(tasks):
+        print(f"{host}: {result}")
+# /Workflows -----------------------------------------------------------------------
 ```
 
 ```bash
-infrable reload nginx-dev --test
+infrable deploy dev-nginx
 ```
 
-### Chapter 6 - Environments and switches
+## Chapter 6 - Environments and Switches
 
 TODO: Document environments
 
 **infra.py**
 
-```bash
+```python
+from infrable import Switch, Host, Service
+
 # Environments/ ----------------------------------------------------------------
 dev = "dev"
 beta = "beta"
 prod = "prod"
 
 environments = {dev, beta, prod}
-env = Switch(environments, init=dev)  # <-- defining a switch between different environments
+env = Switch(environments, init=dev)  # <-- Defining a switch for different environments
 current_env = env()
 # /Environments ----------------------------------------------------------------
 
@@ -241,7 +313,7 @@ dev_host = Host(fqdn="dev.example.com", ip="127.0.0.1")
 beta_host = Host(fqdn="beta.example.com", ip="127.0.0.1")
 prod_host = Host(fqdn="prod.example.com", ip="127.0.0.1")
 
-managed_hosts = env(  # <-- defining hosts for different environments
+managed_hosts = env(  # <-- Switching hosts based on the environment
     dev=[dev_host],
     beta=[beta_host],
     prod=[prod_host],
@@ -250,18 +322,15 @@ managed_hosts = env(  # <-- defining hosts for different environments
 
 # Services/ --------------------------------------------------------------------
 web = Service(
-    host=env(dev=dev_host, beta=beta_host, prod=prod_host),
+    host=env(dev=dev_host, beta=beta_host, prod=prod_host),  # <-- Switching host
     port=8080,
 )
 
-nginx = Service(
-    port=80,
-    host=env(dev=dev_host, beta=beta_host, prod=prod_host),
-)
+nginx = Service(port=80, host=web.host)  # <-- No need to use switch here
 # /Services --------------------------------------------------------------------
 ```
 
-Update templates to use the environment specific values hosts:
+Update templates to use the switchable values:
 
 **templates/nginx/proxy_params.j2**
 
@@ -271,7 +340,7 @@ Update templates to use the environment specific values hosts:
 # ---
 # src: {{ template_prefix }}/{{ _template.src }}
 # dest:
-# {% for host in managed_hosts %}
+# {% for host in managed_hosts %}  # <-- Yes, you can
 #   - loc: {{ host }}:/etc/nginx/proxy_params
 # {% endfor %}
 # chmod: 644
@@ -293,17 +362,19 @@ infrable switch env [dev|beta|prod]
 infrable switches
 ```
 
-### Chapter 6 - Meta and Secrets
+## Chapter 7 - Meta and Secrets
 
 TODO: Document secrets
 
 **infra.py**
 
 ```python
-common_ssh_key = readfile("secrets/common/ssh_key")  # <-- read a secret file
+from infrable import readfile
+
+common_secret_key = readfile("secrets/common/secret_key")  # <-- Read a secret file
 
 web = Service(
-    meta=Meta(secret_key=common_ssh_key),  # <-- attach metadata to items
+    meta=Meta(secret_key=common_secret_key),  # <-- Attach metadata to items
     host=env(dev=dev_host, beta=beta_host, prod=prod_host),
     port=8080,
 )
@@ -312,17 +383,72 @@ web = Service(
 Managing secrets:
 
 ```bash
+echo /secrets/ >> .gitignore
+
 vim secrets/web/secret_key
 ```
 
-### Chapter 7 - The Python Shell
+## Chapter 8 - Going beyond with Custom Modules
 
-Import in a Python shell
+TODO: Document custom modules
+
+**lib/modules/mycloud.py**
 
 ```python
-from infrable import files
-import infra
+from dataclasses import dataclass
+import typer
+from infrable import infra
+from infrable.distro.ubuntu import UbuntuLatestHost
 
-files.deploy()
-infra.nginx.host.remote().sudo.systemctl.reload.nginx()
+
+@dataclass
+class MyCloudUbuntuHost(UbuntuLatestHost):
+    def setup(self, as_root: bool = False):
+        super().setup(as_root=as_root)
+        self.install_mycloud_agent()
+
+    def install_mycloud_agent(self):
+        raise NotImplementedError
+
+
+@dataclass
+class MyCloud:
+    secret_api_key: str
+
+    def provision_ubuntu_host(self, fqdn: str) -> MyCloudUbuntuHost:
+        ip = self.api.create_ubuntu_host(fqdn)
+        return MyCloudUbuntuHost(fqdn=fqdn, ip=ip)
+
+
+cli = typer.Typer()
+
+@cli.command()
+def provision_ubuntu_host(fqdn: str, setup: bool = True):
+    """[WORKFLOW] Provision Ubuntu host."""
+
+    # Get the MyCloud instance from infra.py
+    cloud = next(iter(infra.item_types[MyCloud].values()))
+
+    # Provision the host
+    host = cloud.provision_ubuntu_host(fqdn)
+    if setup:
+        host.setup(as_root=True)
+
+    name = fqdn.split(".")[0]
+    print("Add the host to the infra.py file.")
+    print(f"{name} = {host}")
+```
+
+**infra.py**
+
+```python
+from lib.modules.mycloud import MyCloud, cli as mycloud_cli
+
+# Clouds/ ----------------------------------------------------------------------
+mycloud = MyCloud(secret_api_key=readfile("secrets/mycloud/secret_api_key"))
+# /Clouds ----------------------------------------------------------------------
+```
+
+```
+infra mycloud-cli --help
 ```

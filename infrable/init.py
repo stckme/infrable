@@ -1,10 +1,12 @@
 from pathlib import Path
 
-INFRA_PY = """
+INFRA_PY = '''
 import typer
-from infrable import Host, Meta, Service, Switch, readfile
+from infrable import Host, Meta, Service, Switch, files, parallel, paths, readfile
+from lib.modules.mycloud import MyCloud, cli as mycloud_cli
 
-template_prefix = "https://github.com/username/repo/blob/main"
+# To quickly find the configuration file template on GitHub
+template_prefix = "https://github.com/username/repository/blob/main"
 
 
 # Environments/ ----------------------------------------------------------------
@@ -16,6 +18,11 @@ environments = {dev, beta, prod}
 env = Switch(environments, init=dev)
 current_env = env()
 # /Environments ----------------------------------------------------------------
+
+
+# Clouds/ ----------------------------------------------------------------------
+mycloud = MyCloud(secret_api_key=readfile("secrets/mycloud/secret_api_key"))
+# /Clouds ----------------------------------------------------------------------
 
 
 # Hosts/ -----------------------------------------------------------------------
@@ -38,29 +45,35 @@ web = Service(
     port=8080,
 )
 
-nginx = Service(
-    port=80,
-    host=env(dev=dev_host, beta=beta_host, prod=prod_host),
-)
+nginx = Service(port=80, host=web.host)
 # /Services --------------------------------------------------------------------
 
 
 # Tasks/ -----------------------------------------------------------------------
-nginx.typer = typer.Typer()
+nginx.typer = typer.Typer(help="Nginx specific tasks.")
 @nginx.typer.command()
-def reload(test: bool = True):
-    assert nginx.host, "Service must have a host to reload"
-    if test:
-        nginx.host.remote().sudo.nginx("-t")
-    nginx.host.remote().sudo.systemctl.reload.nginx()
+def reload_nginx():
+    """[TASK] Reload nginx: infrable nginx reload"""
 
-@nginx.typer.command()
-def restart(test: bool = True):
-    assert nginx.host, "Service must have a host to restart"
-    if test:
-        nginx.host.remote().sudo.nginx("-t")
-    nginx.host.remote().sudo.systemctl.restart.nginx()
-""".strip()
+    assert nginx.host, "Service must have a host to reload"
+    nginx.host.remote().sudo.nginx("-t")
+    nginx.host.remote().sudo.systemctl.reload.nginx()
+# Tasks/ -----------------------------------------------------------------------
+
+# Workflows/ -----------------------------------------------------------------------
+deploy = typer.Typer(help="Deployment workflows.")
+@deploy.command(name="nginx")
+def deploy_nginx():
+    """[WORKFLOW] Deploy nginx files: infrable deploy nginx"""
+
+    files.deploy(paths.templates / "nginx")
+    hosts = files.affected_hosts()
+    cmd = "sudo nginx -t && sudo systemctl reload nginx"
+    tasks = [lambda: (h, h.remote().sudo(cmd)) for h in hosts]
+    for host, result in parallel(tasks):
+        print(f"{host}: {result}")
+# /Workflows -----------------------------------------------------------------------
+'''.strip()
 
 NGINX_PROXY_PARAMS_TEMPLATE = """
 # vim: syn=nginx
@@ -91,22 +104,68 @@ NGINX_WEB_TEMPLATE = """
 # ---
 
 server {
-    listen 80;
-    listen [::]:80;
+    listen {{ nginx.port }};
+    listen [::]:{{ nginx.port }};
 
     server_name {{ nginx.host.fqdn }} www.{{ nginx.host.fqdn }};
 
     location / {
-        proxy_pass http://localhost:{{ web.port }};
+        proxy_pass http://127.0.0.1:{{ web.port }};
         include proxy_params;
     }
 }
 """.strip()
 
+MYCLOUD_MODULE = '''
+from dataclasses import dataclass
+import typer
+from infrable import infra
+from infrable.distro.ubuntu import UbuntuLatestHost
+
+
+@dataclass
+class MyCloudUbuntuHost(UbuntuLatestHost):
+    def setup(self, as_root: bool = False):
+        super().setup(as_root=as_root)
+        self.install_mycloud_agent()
+
+    def install_mycloud_agent(self):
+        raise NotImplementedError
+
+
+@dataclass
+class MyCloud:
+    secret_api_key: str
+
+    def provision_ubuntu_host(self, fqdn: str) -> MyCloudUbuntuHost:
+        ip = self.api.create_ubuntu_host(fqdn)
+        return MyCloudUbuntuHost(fqdn=fqdn, ip=ip)
+
+
+cli = typer.Typer()
+
+@cli.command()
+def provision_ubuntu_host(fqdn: str, setup: bool = True):
+    """[WORKFLOW] Provision Ubuntu host."""
+
+    # Get the MyCloud instance from infra.py
+    cloud = next(iter(infra.item_types[MyCloud].values()))
+
+    # Provision the host
+    host = cloud.provision_ubuntu_host(fqdn)
+    if setup:
+        host.setup(as_root=True)
+
+    name = fqdn.split(".")[0]
+    print("Add the host to the infra.py file.")
+    print(f"{name} = {host}")
+'''.strip()
+
 FILES = {
     "infra.py": INFRA_PY,
     "templates/nginx/proxy_params.j2": NGINX_PROXY_PARAMS_TEMPLATE,
     "templates/nginx/web.j2": NGINX_WEB_TEMPLATE,
+    "lib/modules/mycloud.py": MYCLOUD_MODULE,
 }
 
 
