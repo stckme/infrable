@@ -43,7 +43,7 @@ managed_hosts = env(
 
 # Services/ --------------------------------------------------------------------
 web = Service(
-    host=env(dev=dev_host, beta=beta_host, prod=prod_host),
+    host=env.strict(dev=dev_host, beta=beta_host, prod=prod_host),
     meta=Meta(secret_key=readfile("secrets/web/secret_key")),
     port=8080,
 )

@@ -350,7 +350,7 @@ managed_hosts = env(  # <-- Switching hosts based on the environment
 
 # Services/ --------------------------------------------------------------------
 web = Service(
-    host=env(dev=dev_host, beta=beta_host, prod=prod_host),  # <-- Switching host
+    host=env.strict(dev=dev_host, beta=beta_host, prod=prod_host),  # <-- Strict switch
     port=8080,
 )
 
