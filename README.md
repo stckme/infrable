@@ -396,13 +396,25 @@ TODO: Document custom modules
 
 ```python
 from dataclasses import dataclass
-import typer
+from typer import Typer
 from infrable import infra
 from infrable.distro.ubuntu import UbuntuLatestHost
 
+@dataclass
+class MyCloud:
+    """MyCloud Python library."""
+
+    secret_api_key: str
+    typer: Typer | None = None
+
+    def provision_ubuntu_host(self, fqdn: str):
+        ip = self.api.create_ubuntu_host(fqdn)
+        return MyCloudUbuntuHost(fqdn=fqdn, ip=ip)
 
 @dataclass
 class MyCloudUbuntuHost(UbuntuLatestHost):
+    """MyCloud's customized Ubuntu server."""
+
     def setup(self, as_root: bool = False):
         super().setup(as_root=as_root)
         self.install_mycloud_agent()
@@ -410,19 +422,9 @@ class MyCloudUbuntuHost(UbuntuLatestHost):
     def install_mycloud_agent(self):
         raise NotImplementedError
 
+workflows = Typer()
 
-@dataclass
-class MyCloud:
-    secret_api_key: str
-
-    def provision_ubuntu_host(self, fqdn: str) -> MyCloudUbuntuHost:
-        ip = self.api.create_ubuntu_host(fqdn)
-        return MyCloudUbuntuHost(fqdn=fqdn, ip=ip)
-
-
-cli = typer.Typer()
-
-@cli.command()
+@workflows.command()
 def provision_ubuntu_host(fqdn: str, setup: bool = True):
     """[WORKFLOW] Provision Ubuntu host."""
 
@@ -442,13 +444,16 @@ def provision_ubuntu_host(fqdn: str, setup: bool = True):
 **infra.py**
 
 ```python
-from lib.modules.mycloud import MyCloud, cli as mycloud_cli
+from lib.modules import mycloud
 
 # Clouds/ ----------------------------------------------------------------------
-mycloud = MyCloud(secret_api_key=readfile("secrets/mycloud/secret_api_key"))
+cloud = mycloud.MyCloud(secret_api_key=readfile("secrets/mycloud/secret_api_key"))
+
+cloud.typer = typer.Typer(help="MyCloud specific workflows.")
+cloud.typer.add_typer(mycloud.workflows, name="mycloud")
 # /Clouds ----------------------------------------------------------------------
 ```
 
 ```
-infra mycloud-cli --help
+infra cloud --help
 ```

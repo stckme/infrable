@@ -1,9 +1,10 @@
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from typing import Any
 
 from typer import Typer
 
 from infrable import errors, paths
+from infrable.meta import Meta
 from infrable.util import formatter
 
 
@@ -13,7 +14,9 @@ class Switch:
 
     options: set[str]
     init: str
+
     typer: Typer | None = None
+    meta: Meta = field(default_factory=Meta)
 
     def __post_init__(self):
         self.path = paths.switches / "-".join(sorted(self.options))

@@ -76,6 +76,10 @@ if not items:
         elif isinstance(item, list) and item and isinstance(item[0], Host):
             host_groups[name] = item
             continue
+        elif t := getattr(item, "typer", None):
+            if isinstance(t, Typer):
+                typers[name] = t
+            continue
         else:
             continue
 
