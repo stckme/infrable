@@ -263,7 +263,10 @@ def reload_dev_nginx():
     assert dev_nginx.host, "Service must have a host to reload"
     dev_nginx.host.remote().sudo.nginx("-t")
     dev_nginx.host.remote().sudo.systemctl.reload.nginx()
+# /Tasks -----------------------------------------------------------------------
 ```
+
+Running tasks:
 
 ```bash
 infrable dev-nginx reload
@@ -293,6 +296,8 @@ def deploy_dev_nginx():
         print(f"{host}: {result}")
 # /Workflows -----------------------------------------------------------------------
 ```
+
+Running workflows:
 
 ```bash
 infrable deploy dev-nginx
@@ -505,6 +510,8 @@ cloud.typer.add_typer(mycloud.workflows, name="mycloud")
 # /Clouds ----------------------------------------------------------------------
 ```
 
-```
+Running the module workflows:
+
+```bash
 infra cloud --help
 ```
