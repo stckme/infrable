@@ -2,10 +2,16 @@ import sys
 
 import typer
 
-from infrable import errors, infra, init
+from infrable import __version__, errors, infra, init
 from infrable.cli import files, remote, switch
 
 app = typer.Typer(no_args_is_help=True)
+
+
+@app.command()
+def version():
+    """Print the version."""
+    print(f"infrable {__version__}")
 
 
 @app.command()
