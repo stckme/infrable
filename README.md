@@ -9,7 +9,7 @@ Hanny's legendary infrastructure as code solution.
 pip install -U infrable  # requires python >= 3.10
 
 # Bootstrap a new project
-touch init.py
+touch infra.py
 infrable init
 ```
 
@@ -23,7 +23,7 @@ infrable init
 6. [Chapter 5 - Commands, Tasks and Workflows](#chapter-5---commands,-tasks-and-workflows)
 7. [Chapter 6 - Environments and Switches](#chapter-6---environments-and-switches)
 8. [Chapter 7 - Meta and Secrets](#chapter-7---meta-and-secrets)
-9. [Chapter 8 - Going beyond with Custom Modules](#chapter-8---going-beyond-with-custom-modules)
+9. [Chapter 8 - Custom Modules](#chapter-8---custom-modules)
 
 ## Prologue
 
@@ -223,7 +223,11 @@ flowchart TD;
 
 ## Chapter 5 - Commands, Tasks and Workflows
 
-TODO: Document commands
+As Hanny delved deeper into the complexities of infrastructure migration, she encountered
+a critical realization: the need to extend beyond mere configuration pushing. To attain a
+seamless transition, testing, service restarts, and other post-deployment actions were
+imperative. With relentless determination, she integrated a feature within "infra.py" to
+**execute remote commands** on hosts, a capability enhancing the deployment process.
 
 ```bash
 # Run a command on a host by name
@@ -239,7 +243,10 @@ infrable remote affected-hosts "sudo systemctl reload nginx"
 infrable files affected-hosts | infrable remote - "sudo systemctl reload nginx"
 ```
 
-TODO: Document tasks
+But Hanny's pursuit of excellence didn't halt there; she grasped the inadequacy of loose
+command execution, acknowledging the necessity for structured organization. Thus, she
+envisioned a novel concept - the creation of **"Tasks"**, groups of related commands
+designed to streamline operations.
 
 **infra.py**
 
@@ -262,7 +269,9 @@ def reload_dev_nginx():
 infrable dev-nginx reload
 ```
 
-TODO: Document workflows
+As she toiled to realize this vision, a brilliant idea swept over her - to
+orchestrate these tasks into coherent sequences, she christened them
+**"workflows"**, heralding the dawn of a new era in infrastructure management.
 
 **infra.py**
 
@@ -291,7 +300,21 @@ infrable deploy dev-nginx
 
 ## Chapter 6 - Environments and Switches
 
-TODO: Document environments
+The exhilaration of progress was swiftly countered by the rigors of defining **templates,
+tasks, and workflows independently for every host within multiple environments**. Hanny's
+keen eyes blinked tiredly at lines of Python code, her fingers aching from relentless
+typing. It was then that she stumbled upon another vital realization: **the service and
+host relationship hinged upon the environment**. The environment — "dev", "beta", "prod",
+among others — determined where services were deployed. Wondering **if environments could
+be switchable**, she pondered a pivotal question: What if the "infra.py" file could
+adjust values based on the environment? This would phenomenally simplify the deployment
+process, **utilizing the same template, task, and workflow definitions across different
+hosts**. Seizing on this insight, Hanny developed **'Switch'**, an ingenious mechanism
+allowing **environment-dependent value adjustment within "infra.py"**. With 'Switch',
+infrastructure migration wasn't a labyrinth to navigate but a journey of exploration and
+innovation. The weight of her mission lightened with every line of code she churned out.
+And so Hanny, engulfed by the silence of the cosmos, marched on, her spirit indomitable,
+her zeal untamed.
 
 **infra.py**
 
@@ -330,7 +353,7 @@ nginx = Service(port=80, host=web.host)  # <-- No need to use switch here
 # /Services --------------------------------------------------------------------
 ```
 
-Update templates to use the switchable values:
+Updating the templates to use the switchable values:
 
 **templates/nginx/proxy_params.j2**
 
@@ -352,7 +375,7 @@ proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 proxy_set_header X-Forwarded-Proto $scheme;
 ```
 
-Switch management:
+Managing switches:
 
 ```bash
 # Switch current environment
@@ -364,12 +387,22 @@ infrable switches
 
 ## Chapter 7 - Meta and Secrets
 
-TODO: Document secrets
+Chapter 7 - The Secret Keeper
+
+A veil of mystery cloaked Hanny's latest quest. She coveted the ability to access **secret
+values, untouched by the eyes of version control systems, and juxtapose these to hosts
+and services**. It was a daunting challenge — to embed securely these secret keys within
+the Python labyrinth without heightening complexity. She mused, her gaze focused on the
+stars scattered across the cosmos. If simplicity was the mother of invention, Hanny would
+be its devoted disciple. She engaged in the great **Pythonic tradition of simplicity**,
+armed with wisdom acquired from prior challenges, plunging into the task at hand. She
+devised an elegant strategy. Her solution was a poet’s dream and a programmer’s delight,
+the relief of her achievement echoing in the cosmic silence.
 
 **infra.py**
 
 ```python
-from infrable import readfile
+from infrable import Meta, readfile
 
 common_secret_key = readfile("secrets/common/secret_key")  # <-- Read a secret file
 
@@ -383,14 +416,30 @@ web = Service(
 Managing secrets:
 
 ```bash
+# Hide secrets from git
 echo /secrets/ >> .gitignore
 
+# Update the secrets by hand
 vim secrets/web/secret_key
 ```
 
-## Chapter 8 - Going beyond with Custom Modules
+## Chapter 8 - Custom Modules
 
-TODO: Document custom modules
+As the celestial silence enveloped her, Hanny stared at the last line of code and
+finally, exhaled. The Python maestro had defied the odds, charting a path through the
+sprawling galaxy of infrastructure migration. In her hands, humanity held the weapon to
+combat the specter of inevitable infrastructure displacement, not just once but
+potentially countless times henceforth. No longer would they flounder in the face of
+migration, for **'infrable'** was here.
+
+But if the endless cosmos stood as a testament to anything, it was the **limitless
+potential for growth**. Hanny, ever the visionary, saw beyond the painstaking creation of
+a toolkit. She envisioned a continuously evolving mechanism, a collaborative system
+enhanced by the collective genius of Python peers worldwide. That's when it struck her.
+Like a supernova in the silent night, she realized the adaptability imbued within Python.
+Fellow programmers could craft **Python modules** and stitch them into the existing
+"infra.py", thus **extending and elevating its functionality**, a synergy of skills and
+codes enhancing 'infrable' to uncharted territories.
 
 **lib/modules/mycloud.py**
 
@@ -440,6 +489,8 @@ def provision_ubuntu_host(fqdn: str, setup: bool = True):
     print("Add the host to the infra.py file.")
     print(f"{name} = {host}")
 ```
+
+Plugging the module in infra.py:
 
 **infra.py**
 
