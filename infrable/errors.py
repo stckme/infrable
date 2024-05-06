@@ -46,7 +46,7 @@ class SwitchCaseError(Error, ValueError):
         _cases = ", ".join(cases.keys())
 
         super().__init__(
-            f"{path}: all options are not covered by cases."
+            f"{path}: cases are incompatible with the options."
             f" Options are: {_options}, Cases are: {_cases}"
         )
 

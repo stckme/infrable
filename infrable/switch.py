@@ -23,7 +23,20 @@ class Switch:
         if not self.path.exists():
             self.set(self.init)
 
-    def __call__(self, **cases: Any) -> Any:
+    def __call__(self, **cases: Any) -> Any | None:
+        """Get the current value of the switch. returns None if not defined."""
+
+        if not cases:
+            cases = {opt: opt for opt in self.options}
+        elif len(set(cases.keys()) - self.options) > 0:
+            raise errors.SwitchCaseError(self.path, options=self.options, cases=cases)
+
+        val = self.path.read_text().strip()
+        return cases.get(val)
+
+    def strict(self, **cases: Any) -> Any:
+        """Strictly require all cases to be defined."""
+
         if not cases:
             cases = {opt: opt for opt in self.options}
         elif set(cases.keys()) != self.options:
