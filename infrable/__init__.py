@@ -1,4 +1,4 @@
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 from infrable.distro.linux import LinuxLatestHost
 from infrable.distro.ubuntu import UbuntuLatestHost
