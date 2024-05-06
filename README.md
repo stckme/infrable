@@ -2,7 +2,7 @@
 
 Hanny's legendary infrastructure as code solution.
 
-[![PyPI version](https://img.shields.io/pypi/v/expandvars.svg)](https://pypi.org/project/expandvars)
+[![PyPI version](https://img.shields.io/pypi/v/infrable.svg)](https://pypi.org/project/infrable)
 
 ```bash
 # Install
