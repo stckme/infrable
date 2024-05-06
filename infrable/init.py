@@ -22,9 +22,7 @@ current_env = env()
 
 # Clouds/ ----------------------------------------------------------------------
 cloud = mycloud.MyCloud(secret_api_key=readfile("secrets/mycloud/secret_api_key"))
-
-cloud.typer = typer.Typer(help="MyCloud specific workflows.")
-cloud.typer.add_typer(mycloud.workflows, name="mycloud")
+cloud.typer = mycloud.workflows
 # /Clouds ----------------------------------------------------------------------
 
 
@@ -164,7 +162,7 @@ def provision_ubuntu_host(fqdn: str, setup: bool = True):
 
     name = fqdn.split(".")[0]
     print("Add the host to the infra.py file.")
-    print(f"{name} = {host}")
+    print(f"{name} = {repr(host)}")
 '''.strip()
 
 FILES = {

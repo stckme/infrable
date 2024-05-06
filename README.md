@@ -78,6 +78,13 @@ prod_nginx = Service(host=prod_host, port=80)
 # /Services --------------------------------------------------------------------
 ```
 
+List the hosts and services:
+
+```bash
+infrable hosts
+infrable services
+```
+
 ## Chapter 3 - Templates
 
 Gradually piecing together her fragmented memories, Hanny realized configuration files
@@ -490,7 +497,7 @@ def provision_ubuntu_host(fqdn: str, setup: bool = True):
 
     name = fqdn.split(".")[0]
     print("Add the host to the infra.py file.")
-    print(f"{name} = {host}")
+    print(f"{name} = {repr(host}")
 ```
 
 Plugging the module in infra.py:
@@ -502,9 +509,7 @@ from lib.modules import mycloud
 
 # Clouds/ ----------------------------------------------------------------------
 cloud = mycloud.MyCloud(secret_api_key=readfile("secrets/mycloud/secret_api_key"))
-
-cloud.typer = typer.Typer(help="MyCloud specific workflows.")
-cloud.typer.add_typer(mycloud.workflows, name="mycloud")
+cloud.typer = mycloud.workflows
 # /Clouds ----------------------------------------------------------------------
 ```
 

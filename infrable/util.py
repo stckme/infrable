@@ -1,3 +1,5 @@
+from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
 from typing import Any, Callable, Iterable
 
 from jinja2 import Template
@@ -15,19 +17,31 @@ def formatter(template: str) -> Template:
     )
 
 
+@contextmanager
+def parallelcontext(
+    generator: Iterable[Callable[[], Any]] | list[Callable[[], Any]],
+    workers: int | None = None,
+    total: int | None = None,
+    progress: bool = True,
+):
+    """Context manager, run a list of functions in parallel."""
+
+    if progress:
+        generator = tqdm(generator, total=total)
+
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        yield executor.map(lambda x: x(), generator)
+
+
 def parallel(
     generator: Iterable[Callable[[], Any]] | list[Callable[[], Any]],
     workers: int | None = None,
     total: int | None = None,
     progress: bool = True,
 ) -> list:
-    from concurrent.futures import ThreadPoolExecutor
+    """Run a list of functions in parallel."""
 
-    if isinstance(generator, list):
-        total = len(generator)
-
-    if progress:
-        generator = tqdm(generator, total=total)
-
-    with ThreadPoolExecutor(max_workers=workers) as executor:
-        return list(executor.map(lambda x: x(), generator))
+    with parallelcontext(
+        generator, workers=workers, total=total, progress=progress
+    ) as results:
+        return list(results)
