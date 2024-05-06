@@ -392,8 +392,6 @@ infrable switches
 
 ## Chapter 7 - Meta and Secrets
 
-Chapter 7 - The Secret Keeper
-
 A veil of mystery cloaked Hanny's latest quest. She coveted the ability to access **secret
 values, untouched by the eyes of version control systems, and juxtapose these to hosts
 and services**. It was a daunting challenge — to embed securely these secret keys within
