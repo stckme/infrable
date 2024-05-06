@@ -31,7 +31,7 @@ def affected_hosts(only: Iterable[str] | None = None) -> list[Host]:
         if not _diff(new=new, old=old):
             continue
         remote, _ = str(new.relative_to(paths.files)).removesuffix(".new").split("/", 1)
-        _, host = remote.split("@", 1)
+        host = remote.split("@", 1)[-1]
         if only and host not in only_hosts:
             continue
         if host not in hosts:
@@ -70,12 +70,12 @@ def gen(path: Path | None = None, only: Iterable[str] | None = None):
 
             # Render the template for each destination
 
-            login, loc = dest.loc.split(":", 1)
-            _, host = login.split("@", 1)
+            remote, loc = dest.loc.split(":", 1)
+            host = remote.split("@", 1)[-1]
             if not host or host == "None" or (only and host not in only_hosts):
                 print(f"skipping {dest.loc}")
                 continue
-            outpath = paths.files / login / (loc.removeprefix("/") + ".new")
+            outpath = paths.files / remote / (loc.removeprefix("/") + ".new")
             outpath.parent.mkdir(exist_ok=True, parents=True)
             rendered = render(src, dest_loc=dest.loc, **infra.items, **dest.ctx)
             outpath.write_text(rendered)
