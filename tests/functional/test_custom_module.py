@@ -7,7 +7,7 @@ def setup_module():
     init.init()
 
 
-def test_remote():
+def test_custom_module():
     assert "[WORKFLOW] Provision Ubuntu host" in infrable.cloud(
         "provision-ubuntu-host", "--help"
     )
