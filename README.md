@@ -9,7 +9,6 @@ Hanny's legendary infrastructure as code solution.
 pip install -U infrable  # requires python >= 3.10
 
 # Bootstrap a new project
-touch infra.py
 infrable init
 ```
 

@@ -4,13 +4,11 @@ from typing import Any, Iterable, Type
 
 from typer import Typer
 
-from infrable import errors
+from infrable import INFRA_MODULE_NAME, errors
 from infrable.host import Host
 from infrable.meta import Meta
 from infrable.service import Service
 from infrable.switch import Switch
-
-INFRA_MODULE_NAME = "infra"
 
 items: dict[str, Any] = {}
 item_types: dict[Type[Any], dict[str, Any]] = {}
@@ -38,10 +36,6 @@ if not items:
             # Skip private members
             continue
         item = getattr(infra_module, name)
-        if type(item) == type:
-            # Skip classes
-            continue
-
         items[name] = item
         itemtype = type(item)
         if itemtype not in item_types:
