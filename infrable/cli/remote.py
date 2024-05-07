@@ -1,16 +1,15 @@
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Iterable
 
 import typer
 from tqdm import tqdm
 
-from infrable import Host, files, infra
+from infrable import Host, files, infra, utils
 
 app = typer.Typer(no_args_is_help=True)
 
 
 @app.command(name="-")
-def from_stdin(command: str):
+def from_stdin(command: str, workers: int | None = None):
     """Execute a script on the list of hosts passed via stdin."""
 
     hosts = []
@@ -21,22 +20,26 @@ def from_stdin(command: str):
         for host in infra.filtered_hosts(only=[host]):
             hosts.append(host)
 
-    _execute(hosts, command=command)
+    _execute_batch(hosts, command=command, workers=workers)
 
 
 @app.command()
-def infra_hosts(command: str, only: list[str] = typer.Option(None)):
+def infra_hosts(
+    command: str, only: list[str] = typer.Option(None), workers: int | None = None
+):
     """Execute a script on the hosts listed in the infra."""
 
     hosts = infra.hosts.values()
     if only:
         hosts = infra.filtered_hosts(only=only)
 
-    _execute(hosts, command=command)
+    _execute_batch(hosts, command=command, workers=workers)
 
 
 @app.command()
-def affected_hosts(command: str, only: list[str] = typer.Option(None)):
+def affected_hosts(
+    command: str, only: list[str] = typer.Option(None), workers: int | None = None
+):
     """Execute a script on the affected hosts in the last deployment."""
 
     hosts = files.affected_hosts()
@@ -45,18 +48,20 @@ def affected_hosts(command: str, only: list[str] = typer.Option(None)):
         only_hosts = set(h.fqdn for h in infra.filtered_hosts(only=only))
         hosts = (h for h in hosts if h.fqdn in only_hosts)
 
-    _execute(hosts, command=command)
+    _execute_batch(hosts, command=command, workers=workers)
 
 
 for name, group in infra.host_groups.items():
 
-    def groupmain(command: str, only: list[str] = typer.Option(None)):
+    def groupmain(
+        command: str, only: list[str] = typer.Option(None), workers: int | None = None
+    ):
         hosts = group
         if only:
             only_hosts = set(h.fqdn for h in infra.filtered_hosts(only=only))
             hosts = (h for h in hosts if h.fqdn in only_hosts)
 
-        _execute(hosts, command=command)
+        _execute_batch(hosts, command=command, workers=workers)
 
     help = f"Execute a script on {name} hosts."
     app.command(name=name, help=help)(groupmain)
@@ -71,16 +76,11 @@ for name, host in infra.hosts.items():
     app.command(name=name, help=help)(hostmaain)
 
 
-def _execute(hosts: Iterable[Host], command: str):
+def _execute_batch(hosts: Iterable[Host], command: str, workers: int | None):
     hosts = {h.ip: h for h in hosts}.values()
-    futures = []
-    with ThreadPoolExecutor(max_workers=4) as pool:
-        for h in hosts:
-            fut = pool.submit(lambda: (h, h.remote()(command, _err_to_out=True)))
-            futures.append(fut)
-        print()
-        for result in tqdm(as_completed(futures), total=len(futures)):
-            host, result = result.result()
+    fn = lambda host: (host, host.remote()(command, _err_to_out=True))
+    with utils.concurrentcontext(fn, hosts, workers=workers) as results:
+        for host, result in tqdm(results, total=len(hosts)):
             typer.secho(f"╭ {host}", bold=True)
             print(result)
             print()

@@ -4,7 +4,7 @@ from typer import Typer
 
 from infrable.host import Host
 from infrable.meta import Meta
-from infrable.util import formatter
+from infrable.utils import format_item
 
 
 @dataclass(unsafe_hash=True, order=True, eq=True)
@@ -16,8 +16,8 @@ class Service:
     meta: Meta = field(default_factory=Meta)
     typer: Typer | None = None
 
-    def format(self, name: str, format) -> str:
-        return formatter(format).render(name=name, **asdict(self))
+    def format(self, name: str, format: str) -> str:
+        return format_item(format).render(name=name, **asdict(self))
 
     def __str__(self) -> str:
         return f'{self.host or ""}:{self.port or ""}'

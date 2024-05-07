@@ -2,7 +2,6 @@ import random
 import shutil
 import subprocess as sp
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from difflib import unified_diff
 from pathlib import Path
@@ -14,7 +13,7 @@ from click import Choice
 from jinja2 import Environment, FileSystemLoader
 from tqdm import tqdm
 
-from infrable import errors, infra, paths
+from infrable import errors, infra, paths, utils
 from infrable.host import Host
 from infrable.template import Metadata, render
 
@@ -83,7 +82,7 @@ def gen(path: Path | None = None, only: Iterable[str] | None = None):
         print()
 
 
-def pull():
+def pull(workers: int | None = None):
     """For each generated file pull the current version from the server."""
 
     if not paths.files.exists():
@@ -92,27 +91,9 @@ def pull():
     for old in paths.files.glob("**/*.old"):
         old.unlink()
 
-    def _pull(new: Path):
-        dest = str(new).removesuffix(".new") + ".old"
-        remote, loc = (
-            str(new.relative_to(paths.files)).removesuffix(".new").split("/", 1)
-        )
-        src = f"/{loc}"
-        name = remote.split("@", 1)[-1]
-        host = infra.get_host(name)
-        if not host:
-            raise errors.InvalidDestinationError(dest=dest)
-        addr = f"{host.admin}@{host.ip}"
-        _sudo_pull_file(addr, src, dest)
-        return new, dest
-
-    futures = []
-    with ThreadPoolExecutor(max_workers=4) as pool:
-        for new in paths.files.glob("**/*.new"):
-            futures.append(pool.submit(_pull, new))
-        print()
-        for result in tqdm(as_completed(futures, timeout=2 * 60), total=len(futures)):
-            new, dest = result.result()
+    new_files = list(paths.files.glob("**/*.new"))
+    with utils.concurrentcontext(_pull, new_files, workers=workers) as results:
+        for new, dest in tqdm(results, total=len(new_files)):
             typer.secho(f"╭ {new}", bold=True)
             print(f"╰ {dest}")
             print()
@@ -233,6 +214,19 @@ def recover(path: Path | None = None):
 
     revert(path)
     push()
+
+
+def _pull(new):
+    dest = str(new).removesuffix(".new") + ".old"
+    remote, loc = str(new.relative_to(paths.files)).removesuffix(".new").split("/", 1)
+    src = f"/{loc}"
+    name = remote.split("@", 1)[-1]
+    host = infra.get_host(name)
+    if not host:
+        raise errors.InvalidDestinationError(dest=dest)
+    addr = f"{host.admin}@{host.ip}"
+    _sudo_pull_file(addr, src, dest)
+    return new, dest
 
 
 def _old_path(new: Path) -> Path:

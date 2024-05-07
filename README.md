@@ -286,7 +286,7 @@ orchestrate these tasks into coherent sequences, she christened them
 **infra.py**
 
 ```python
-from infrable import parallel, paths
+from infrable import concurrent, paths
 
 # Workflows/ -----------------------------------------------------------------------
 deploy = typer.Typer(help="Deployment workflows.")
@@ -296,10 +296,9 @@ def deploy_dev_nginx():
     """[WORKFLOW] Deploy dev_nginx files: infrable deploy dev-nginx"""
 
     files.deploy(paths.templates / "nginx")
-    hosts = files.affected_hosts()
     cmd = "sudo nginx -t && sudo systemctl reload nginx && echo success || echo failed"
-    tasks = [lambda: (h, h.remote().sudo(cmd)) for h in hosts]
-    for host, result in parallel(tasks):
+    fn = lambda host: (host, host.remote().sudo(cmd))
+    for host, result in concurrent(fn, files.affected_hosts()):
         print(f"{host}: {result}")
 # /Workflows -----------------------------------------------------------------------
 ```

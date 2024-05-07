@@ -4,6 +4,7 @@ from typing import Callable
 
 def readfile(
     path: Path | str,
+    *,
     init: Callable[[], str] = str,
     fmt: Callable[[str], str] | None = lambda s: s.strip(),
 ) -> str:

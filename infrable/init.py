@@ -2,7 +2,7 @@ from pathlib import Path
 
 INFRA_PY = '''
 import typer
-from infrable import Host, Meta, Service, Switch, files, parallel, paths, readfile
+from infrable import Host, Meta, Service, Switch, files, concurrent, paths, readfile
 from lib.modules import mycloud
 
 # To quickly find the configuration file template on GitHub
@@ -68,10 +68,9 @@ def deploy_nginx():
     """[WORKFLOW] Deploy nginx files: infrable deploy nginx"""
 
     files.deploy(paths.templates / "nginx")
-    hosts = files.affected_hosts()
-    cmd = "sudo nginx -t && sudo systemctl reload nginx"
-    tasks = [lambda: (h, h.remote().sudo(cmd)) for h in hosts]
-    for host, result in parallel(tasks):
+    cmd = "sudo nginx -t && sudo systemctl reload nginx && echo success || echo failed"
+    fn = lambda host: (host, host.remote().sudo(cmd))
+    for host, result in concurrent(fn, files.affected_hosts()):
         print(f"{host}: {result}")
 # /Workflows -----------------------------------------------------------------------
 '''.strip()

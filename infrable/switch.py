@@ -5,7 +5,7 @@ from typer import Typer
 
 from infrable import errors, paths
 from infrable.meta import Meta
-from infrable.util import formatter
+from infrable.utils import format_item
 
 
 @dataclass(unsafe_hash=True, order=True, eq=True)
@@ -57,8 +57,8 @@ class Switch:
         self.path.unlink(missing_ok=True)
         raise errors.SwitchValueError(self.path, value=value, options=self.options)
 
-    def format(self, name: str, format) -> str:
-        return formatter(format).render(name=name, **asdict(self))
+    def format(self, name: str, format: str) -> str:
+        return format_item(format).render(name=name, **asdict(self))
 
     def __str__(self) -> str:
-        return self()
+        return self.strict()

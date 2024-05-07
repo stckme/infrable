@@ -1,4 +1,4 @@
-__version__ = "0.1.4"
+__version__ = "0.1.5"
 
 from infrable.distro.linux import LinuxLatestHost
 from infrable.distro.ubuntu import UbuntuLatestHost
@@ -7,4 +7,4 @@ from infrable.meta import Meta
 from infrable.readfile import readfile
 from infrable.service import Service
 from infrable.switch import Switch
-from infrable.util import parallel, parallelcontext
+from infrable.utils import concurrent, concurrentcontext
