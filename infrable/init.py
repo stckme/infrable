@@ -52,7 +52,7 @@ nginx = Service(port=80, host=web.host)
 
 # Tasks/ -----------------------------------------------------------------------
 nginx.typer = typer.Typer(help="Nginx specific tasks.")
-@nginx.typer.command()
+@nginx.typer.command(name="reload")
 def reload_nginx():
     """[TASK] Reload nginx: infrable nginx reload"""
 
