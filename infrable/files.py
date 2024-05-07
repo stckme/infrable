@@ -108,9 +108,7 @@ def backup():
     dirname = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
     backupdir = paths.backups / dirname
     shutil.copytree(str(paths.files), str(backupdir))
-    print()
     print(f"backup: {backupdir}")
-    print()
 
 
 def diff():
@@ -120,8 +118,6 @@ def diff():
         old = _old_path(new)
         if d := _diff(new=new, old=old):
             _print_diff(d)
-            print()
-            print()
             print()
 
 
@@ -166,8 +162,6 @@ def push(yes: bool = False):
             new.unlink()
             old.unlink()
         print()
-        print()
-        print()
 
 
 def revert(path: Path | None = None):
@@ -198,14 +192,18 @@ def deploy(
 
     if path or yes or typer.confirm("Generate fresh files?", default=True, err=True):
         gen(path, only=only)
+        print()
         pull()
+        print()
         backup()
     elif typer.confirm("Pull files from remote?", default=True, err=True):
         pull()
+        print()
         backup()
     elif typer.confirm("Backup files locally?", default=True, err=True):
         backup()
 
+    print()
     push(yes=yes)
 
 
@@ -213,6 +211,7 @@ def recover(path: Path | None = None):
     """[WORKFLOW] revert and push files from backup."""
 
     revert(path)
+    print()
     push()
 
 
