@@ -1,5 +1,3 @@
-import sys
-
 import typer
 
 app = typer.Typer(no_args_is_help=True)
@@ -20,7 +18,7 @@ def init_():
 
 
 if IS_PROJECT_DIR:
-    from infrable import __version__, errors, infra
+    from infrable import infra
     from infrable.cli import files, remote, switch
 
     @app.command()
@@ -65,10 +63,3 @@ if IS_PROJECT_DIR:
 
     for name, ext in infra.typers.items():
         app.add_typer(ext, name=name.replace("_", "-"))
-
-    if __name__ == "__main__":
-        try:
-            app()
-        except errors.Error as e:
-            print(e, file=sys.stderr)
-            raise typer.Exit(1) from e

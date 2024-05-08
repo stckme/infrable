@@ -58,3 +58,18 @@ class SwitchError(Error, ValueError):
             f"{path}: switch value is set to {val},"
             f" but no case matched. Cases are: {_cases}"
         )
+
+
+class DuplicateNameError(Error, ValueError):
+    def __init__(self, name):
+        super().__init__(f"Duplicate name: {name}")
+
+
+class DuplicateIPError(Error, ValueError):
+    def __init__(self, ip):
+        super().__init__(f"Duplicate IP: {ip}")
+
+
+class DuplicateFQDNError(Error, ValueError):
+    def __init__(self, fqdn):
+        super().__init__(f"Duplicate IP: {fqdn}")

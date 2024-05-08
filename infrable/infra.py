@@ -35,6 +35,9 @@ if not items:
         if name.startswith("_"):
             # Skip private members
             continue
+
+        if name in items:
+            raise errors.DuplicateNameError(name)
         item = getattr(infra_module, name)
         items[name] = item
         itemtype = type(item)
@@ -44,8 +47,12 @@ if not items:
 
         if isinstance(item, Host):
             hosts[name] = item
+            if item.ip in by_ip:
+                raise errors.DuplicateIPError(item.ip)
             by_ip[item.ip] = item
             if item.fqdn:
+                if item.fqdn in by_fqdn:
+                    raise errors.DuplicateFQDNError(item.fqdn)
                 by_fqdn[item.fqdn] = item
             if item.typer:
                 typers[name] = item.typer
@@ -53,29 +60,22 @@ if not items:
             services[name] = item
             if item.typer:
                 typers[name] = item.typer
-                continue
         elif isinstance(item, Switch):
             switches[name] = item
             if item.typer:
                 typers[name] = item.typer
-            continue
         elif isinstance(item, Meta):
             metas[name] = item
             if "typer" in item:
-                typers[name] = item.typer
-            continue
+                if isinstance(item, Typer):
+                    typers[name] = item.typer
         elif isinstance(item, Typer):
             typers[name] = item
-            continue
         elif isinstance(item, list) and item and isinstance(item[0], Host):
             host_groups[name] = item
-            continue
         elif t := getattr(item, "typer", None):
             if isinstance(t, Typer):
                 typers[name] = t
-            continue
-        else:
-            continue
 
 
 def get_host(name: str) -> Host | None:

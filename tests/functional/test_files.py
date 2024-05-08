@@ -97,6 +97,10 @@ def test_files_affect_hosts():
         == "root@dev.example.com"
     )
     assert (
+        infrable.files("affected-hosts", only="127.0.0.1", _tty_out=False).strip()
+        == "root@dev.example.com"
+    )
+    assert (
         infrable.files("affected-hosts", only="managed_hosts", _tty_out=False).strip()
         == "root@dev.example.com"
     )

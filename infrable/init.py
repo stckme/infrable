@@ -28,8 +28,8 @@ cloud.typer = mycloud.workflows
 
 # Hosts/ -----------------------------------------------------------------------
 dev_host = Host(fqdn="dev.example.com", ip="127.0.0.1")
-beta_host = Host(fqdn="beta.example.com", ip="127.0.0.1")
-prod_host = Host(fqdn="prod.example.com", ip="127.0.0.1")
+beta_host = Host(fqdn="beta.example.com", ip="127.0.0.2")
+prod_host = Host(fqdn="prod.example.com", ip="127.0.0.3")
 
 managed_hosts = env(
     dev=[dev_host],
