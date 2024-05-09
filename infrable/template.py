@@ -9,10 +9,8 @@ from jinja2 import Template as JinjaTemplate
 from infrable import errors
 
 
-def _jinja_render(content: str, big_ctx: dict[str, Any], **extra_ctx: Any) -> str:
-    return JinjaTemplate(content, undefined=StrictUndefined).render(
-        big_ctx, **extra_ctx
-    )
+def _jinja_render(content: str, *args: dict[str, Any], **kwargs: Any) -> str:
+    return JinjaTemplate(content, undefined=StrictUndefined).render(*args, **kwargs)
 
 
 @dataclass(frozen=True)
@@ -48,7 +46,7 @@ class Metadata:
     _rendered: str = ""
 
     @classmethod
-    def parse(cls, path: Path, ctx: dict[str, Any]):
+    def parse(cls, path: Path, *args: dict[str, Any], **kwargs: Any):
         """Parse metadata from the given file content."""
 
         reading = False
@@ -66,7 +64,8 @@ class Metadata:
 
         raw = raw.strip()
 
-        rendered = _jinja_render(raw, big_ctx=ctx, _template={"src": str(path)})
+        kwargs["_template"] = {"src": str(path)}
+        rendered = _jinja_render(raw, *args, **kwargs)
         yamllines = [line.removeprefix("# ") for line in rendered.splitlines()]
         if not yamllines:
             raise errors.MissingMetadataError(src=path)
@@ -104,12 +103,12 @@ class Metadata:
         return header
 
 
-def render(path: Path, dest_loc: str, big_ctx: dict[str, Any], **extra_ctx: Any) -> str:
+def render(path: Path, dest_loc: str, *args: dict[str, Any], **kwargs: Any) -> str:
     """Render the template with the given context, for a single destination."""
 
-    meta = Metadata.parse(path, ctx=big_ctx)
+    meta = Metadata.parse(path, *args)
     header = meta.clean_header(dest_loc)
     tmpl = path.read_text().replace(meta._raw, header)
-    content = _jinja_render(tmpl, big_ctx, **extra_ctx)
+    content = _jinja_render(tmpl, *args, **kwargs)
 
     return f"{content}\n"  # all config, specially sudoers requires a trailing newline
