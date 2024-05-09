@@ -9,8 +9,8 @@ from jinja2 import Template as JinjaTemplate
 from infrable import errors
 
 
-def _jinja_render(content: str, ctx: dict[str, Any]) -> str:
-    return JinjaTemplate(content, undefined=StrictUndefined).render(ctx)
+def _jinja_render(content: str, ctx: dict[str, Any], **kwargs: Any) -> str:
+    return JinjaTemplate(content, undefined=StrictUndefined).render(ctx, **kwargs)
 
 
 @dataclass(frozen=True)
@@ -49,9 +49,6 @@ class Metadata:
     def parse(cls, path: Path, ctx: dict[str, Any]):
         """Parse metadata from the given file content."""
 
-        ctx = {k: v for k, v in ctx.items()}
-        ctx["_template"] = {"src": str(path)}
-
         reading = False
         raw = ""
         rendered = ""
@@ -67,7 +64,7 @@ class Metadata:
 
         raw = raw.strip()
 
-        rendered = _jinja_render(raw, ctx=ctx)
+        rendered = _jinja_render(raw, ctx=ctx, _template={"src": str(path)})
         yamllines = [line.removeprefix("# ") for line in rendered.splitlines()]
         if not yamllines:
             raise errors.MissingMetadataError(src=path)
@@ -111,6 +108,6 @@ def render(path: Path, dest_loc: str, ctx: dict[str, Any]) -> str:
     meta = Metadata.parse(path, ctx=ctx)
     header = meta.clean_header(dest_loc)
     tmpl = path.read_text().replace(meta._raw, header)
-    content = _jinja_render(tmpl, ctx=ctx)
+    content = _jinja_render(tmpl, ctx)
 
     return f"{content}\n"  # all config, specially sudoers requires a trailing newline

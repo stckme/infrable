@@ -76,7 +76,7 @@ def gen(path: Path | None = None, only: Iterable[str] | None = None):
                 continue
             outpath = paths.files / remote / (loc.removeprefix("/") + ".new")
             outpath.parent.mkdir(exist_ok=True, parents=True)
-            ctx = {k: v for k, v in infra.items.items()}
+            ctx = dict(infra.items.items())
             ctx.update(dest.ctx)
             rendered = render(src, dest_loc=dest.loc, ctx=ctx)
             outpath.write_text(rendered)
