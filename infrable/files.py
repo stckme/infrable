@@ -107,6 +107,10 @@ def backup():
 
     dirname = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
     backupdir = paths.backups / dirname
+    while backupdir.exists():
+        time.sleep(1)
+        dirname = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+        backupdir = paths.backups / dirname
     shutil.copytree(str(paths.files), str(backupdir))
     print(f"backup: {backupdir}")
 
