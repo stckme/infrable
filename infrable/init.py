@@ -2,7 +2,9 @@ from pathlib import Path
 
 INFRA_PY = '''
 import typer
-from infrable import Host, Meta, Service, Switch, files, concurrent, paths, readfile
+from infrable import Meta, Service, Switch
+from infrable import UbuntuLatestHost as Host
+from infrable import concurrent, files, paths, readfile
 from lib.modules import mycloud
 
 # To quickly find the configuration file template on GitHub

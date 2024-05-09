@@ -45,6 +45,15 @@ if not items:
             item_types[itemtype] = {}
         item_types[itemtype][name] = item
 
+        bases = list(itemtype.__bases__)
+        while bases:
+            base = bases.pop()
+            if base != object:
+                if base not in item_types:
+                    item_types[base] = {}
+                item_types[base][name] = item
+                bases.extend(base.__bases__)
+
         if isinstance(item, Host):
             hosts[name] = item
             if item.ip in by_ip:
