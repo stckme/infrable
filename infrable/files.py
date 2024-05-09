@@ -54,7 +54,7 @@ def gen(path: Path | None = None, only: Iterable[str] | None = None):
         src = path / t
         typer.secho(f"╭ {src}", bold=True)
 
-        meta = Metadata.parse(src, **infra.items)
+        meta = Metadata.parse(src, ctx=infra.items)
 
         if meta.skip:
             print("╰ skip: true")
@@ -76,7 +76,9 @@ def gen(path: Path | None = None, only: Iterable[str] | None = None):
                 continue
             outpath = paths.files / remote / (loc.removeprefix("/") + ".new")
             outpath.parent.mkdir(exist_ok=True, parents=True)
-            rendered = render(src, dest_loc=dest.loc, **infra.items, **dest.ctx)
+            ctx = {k: v for k, v in infra.items.items()}
+            ctx.update(dest.ctx)
+            rendered = render(src, dest_loc=dest.loc, ctx=ctx)
             outpath.write_text(rendered)
             print(outpath)
         print()
