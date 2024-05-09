@@ -8,7 +8,7 @@ from infrable.distro.linux import LinuxLatestHost
 class UbuntuLatestHost(LinuxLatestHost):
     """A latest version of Ubuntu."""
 
-    packages: list[str] = field(default_factory=list)
+    packages: set[str] = field(default_factory=set)
 
     def setup(self, as_root: bool = False):
         super().setup(as_root=as_root)
@@ -26,16 +26,17 @@ class UbuntuLatestHost(LinuxLatestHost):
             "apt-get", "-o", "DPkg::Lock::Timeout=60", "update", "-y", _fg=True
         )
 
-    def ensure_apt_packages(self, packages: list[str] | None = None):
-        packages = packages or self.packages
+    def ensure_apt_packages(self, packages: set[str] | None = None):
+        if packages is None:
+            pkgs = list(self.packages)
+        else:
+            pkgs = list(packages)
         if packages:
             self.remote().sudo(
                 "apt-get", "-o", "DPkg::Lock::Timeout=60", "update", "-y", _fg=True
             )
-            package_batches = [
-                self.packages[i : i + 10] for i in range(0, len(packages), 10)
-            ]
-            for batch in package_batches:
+            pkg_batches = [pkgs[i : i + 10] for i in range(0, len(packages), 10)]
+            for batch in pkg_batches:
                 self.remote().sudo(
                     "apt-get",
                     "-o",
