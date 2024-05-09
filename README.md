@@ -391,6 +391,9 @@ Managing switches:
 # Switch current environment
 infrable switch env [dev|beta|prod]
 
+# If you name a switch "env", you get an alias for convenience
+infra env [dev|beta|prod]
+
 # Check all switch values
 infrable switches
 ```

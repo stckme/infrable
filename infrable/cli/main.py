@@ -1,4 +1,5 @@
 import typer
+from click import Choice
 
 app = typer.Typer(no_args_is_help=True)
 
@@ -63,3 +64,11 @@ if IS_PROJECT_DIR:
 
     for name, ext in infra.typers.items():
         app.add_typer(ext, name=name.replace("_", "-"))
+
+    if sw := infra.switches.get("env"):
+        # Alias for 'infrable switch env'
+        def env(value: str = typer.Argument(..., click_type=Choice(list(sw.options)))):
+            """Alias for `infrable switch env`."""
+            sw.set(value)
+
+        app.command()(env)
