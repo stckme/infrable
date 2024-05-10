@@ -201,7 +201,7 @@ def deploy(
         print()
         backup()
     elif typer.confirm("Pull files from remote?", default=True, err=True):
-        pull()
+        pull(workers=workers)
         print()
         backup()
     elif typer.confirm("Backup files locally?", default=True, err=True):
