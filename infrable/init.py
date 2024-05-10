@@ -118,6 +118,25 @@ server {
 }
 """.strip()
 
+HOSTNAME_TEMPLATE = """
+# vim: syn=ansible.vim
+
+# ---
+# src: {{ template_prefix }}/{{ _template.src }}
+# dest:
+#   {% for host in managed_hosts %}
+#   {% if host.fqdn %}
+#   - loc: {{ host }}:/etc/hostname
+#     ctx:
+#       hostname: {{ host.fqdn.split(".")[0] }}
+#   {% endif %}
+#   {% endfor %}
+# chmod: 644
+# chown: root:root
+# ---
+{{ hostname }}
+""".strip()
+
 MYCLOUD_MODULE = '''
 from dataclasses import dataclass
 from typer import Typer
@@ -168,6 +187,7 @@ def provision_ubuntu_host(fqdn: str, setup: bool = True):
 
 FILES = {
     "infra.py": INFRA_PY,
+    "templates/hostname/hostname.j2": HOSTNAME_TEMPLATE,
     "templates/nginx/proxy_params.j2": NGINX_PROXY_PARAMS_TEMPLATE,
     "templates/nginx/web.j2": NGINX_WEB_TEMPLATE,
     "lib/modules/mycloud.py": MYCLOUD_MODULE,

@@ -1,3 +1,6 @@
+╭ templates/hostname/hostname.j2
+╰─ .infrable/files/root@dev.example.com/etc/hostname.new
+
 ╭ templates/nginx/proxy_params.j2
 ╰─ .infrable/files/root@dev.example.com/etc/nginx/proxy_params.new
 

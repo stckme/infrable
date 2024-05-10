@@ -1,3 +1,19 @@
+--- .infrable/files/root@dev.example.com/etc/hostname.old
+
++++ .infrable/files/root@dev.example.com/etc/hostname.new
+
+@@ -0,0 +1,9 @@
+
++# vim: syn=ansible.vim
++
++# ---
++# chmod: '644'
++# chown: root:root
++# dest: root@dev.example.com:/etc/hostname
++# src: https://github.com/username/repository/blob/main/templates/hostname/hostname.j2
++# ---
++dev
+
 --- .infrable/files/root@dev.example.com/etc/nginx/proxy_params.old
 
 +++ .infrable/files/root@dev.example.com/etc/nginx/proxy_params.new
