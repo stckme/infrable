@@ -7,9 +7,12 @@ app = typer.Typer(no_args_is_help=True)
 
 
 for name, sw in infra.switches.items():
-    help = f"Set the value of the {name} switch."
+    help = f"Get or set the value of the {name} switch."
 
-    def main(value: str = typer.Argument(..., click_type=Choice(list(sw.options)))):
-        sw.set(value)
+    def main(value: str = typer.Argument(None, click_type=Choice(list(sw.options)))):
+        if value is None:
+            print(sw())
+        else:
+            sw.set(value)
 
     app.command(name=name, help=help)(main)
