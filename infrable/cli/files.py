@@ -24,8 +24,10 @@ def deploy(
 
 
 @app.command(help=files.recover.__doc__)
-def recover(path: Path = typer.Argument(None), yes: bool = False):
-    files.recover(path, yes=yes)
+def recover(
+    path: Path = typer.Argument(None), yes: bool = False, workers: int | None = None
+):
+    files.recover(path, yes=yes, workers=workers)
 
 
 @app.command(help=files.gen.__doc__)

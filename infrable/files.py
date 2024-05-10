@@ -125,9 +125,10 @@ def diff():
             print()
 
 
-def push(yes: bool = False):
+def push(yes: bool = False, workers: int | None = None):
     """Diff and push the generated files to the remote server."""
 
+    to_push = []
     for new in paths.files.glob("**/*.new"):
         remote, loc = (
             str(new.relative_to(paths.files)).removesuffix(".new").split("/", 1)
@@ -149,23 +150,19 @@ def push(yes: bool = False):
                         continue
                     case "all":
                         yes = True
-
-            meta = Metadata.parse(new)
-            dest = next(d for d in meta.dest if d.loc == remote_dest)
-            chown = dest.chown or meta.chown
-            chmod = dest.chmod or meta.chmod
-            dest = f"/{loc}"
-            name = remote.split("@", 1)[-1]
-            host = infra.get_host(name)
-            if not host:
-                raise errors.InvalidDestinationError(dest)
-            addr = f"{host.admin}@{host.ip}"
-            _sudo_push_file(addr, new, dest, chown=chown, chmod=chmod)
+            to_push.append({"new": new, "remote_dest": remote_dest})
         else:
             print(f"skipping {remote_dest}")
             new.unlink()
             old.unlink()
         print()
+    with utils.concurrentcontext(
+        lambda d: _push(**d), to_push, workers=workers
+    ) as results:
+        for new, remote_dest in tqdm(results, total=len(to_push)):
+            typer.secho(f"╭ {new}", bold=True)
+            print(f"╰ {remote_dest}")
+            print()
 
 
 def revert(path: Path | None = None):
@@ -211,18 +208,18 @@ def deploy(
         backup()
 
     print()
-    push(yes=yes)
+    push(yes=yes, workers=workers)
 
 
-def recover(path: Path | None = None, yes: bool = False):
+def recover(path: Path | None = None, yes: bool = False, workers: int | None = None):
     """[WORKFLOW] revert and push files from backup."""
 
     revert(path)
     print()
-    push(yes=yes)
+    push(yes=yes, workers=workers)
 
 
-def _pull(new):
+def _pull(new: Path) -> tuple[Path, str]:
     dest = str(new).removesuffix(".new") + ".old"
     remote, loc = str(new.relative_to(paths.files)).removesuffix(".new").split("/", 1)
     src = f"/{loc}"
@@ -233,6 +230,23 @@ def _pull(new):
     addr = f"{host.admin}@{host.ip}"
     _sudo_pull_file(addr, src, dest)
     return new, dest
+
+
+def _push(new: Path, remote_dest: str) -> tuple[Path, str]:
+    meta = Metadata.parse(new)
+    dest = next(d for d in meta.dest if d.loc == remote_dest)
+    chown = dest.chown or meta.chown
+    chmod = dest.chmod or meta.chmod
+
+    remote, loc = remote_dest.split(":", 1)
+    dest = f"/{loc}"
+    name = remote.split("@", 1)[-1]
+    host = infra.get_host(name)
+    if not host:
+        raise errors.InvalidDestinationError(dest)
+    addr = f"{host.admin}@{host.ip}"
+    _sudo_push_file(addr, new, dest, chown=chown, chmod=chmod)
+    return new, remote_dest
 
 
 def _old_path(new: Path) -> Path:
