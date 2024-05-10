@@ -190,14 +190,17 @@ def revert(path: Path | None = None):
 
 
 def deploy(
-    path: Path | None = None, only: Iterable[str] | None = None, yes: bool = False
+    path: Path | None = None,
+    only: Iterable[str] | None = None,
+    yes: bool = False,
+    workers: int | None = None,
 ):
     """[WORKFLOW] generate, pull, backup, compare and push the generated files to the remote server."""
 
     if path or yes or typer.confirm("Generate fresh files?", default=True, err=True):
         gen(path, only=only)
         print()
-        pull()
+        pull(workers=workers)
         print()
         backup()
     elif typer.confirm("Pull files from remote?", default=True, err=True):
