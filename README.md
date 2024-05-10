@@ -395,7 +395,7 @@ infrable switch env [dev|beta|prod]
 infrable switch env
 
 # If you name a switch "env", you get an alias for convenience
-infra env [dev|beta|prod]
+infrable env [dev|beta|prod]
 
 # Check all switch values
 infrable switches
