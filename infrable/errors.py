@@ -12,11 +12,6 @@ class MissingMetadataError(Error, ValueError):
         super().__init__(f"missing metadata in template: {src}")
 
 
-class MissingDestinationError(Error, ValueError):
-    def __init__(self, src):
-        super().__init__(f"missing `dest` in template metadata: {src}")
-
-
 class InvalidDestinationError(Error, ValueError):
     def __init__(self, dest):
         super().__init__(f"invalid destination: {dest}")

@@ -71,14 +71,13 @@ class Metadata:
             raise errors.MissingMetadataError(src=path)
 
         meta: dict = yaml.safe_load("\n".join(yamllines))
-        meta_dest: str | dict | list[str | dict] | None = meta.pop("dest")
-
-        if not meta_dest:
-            raise errors.MissingDestinationError(src=meta["src"])
+        meta_dest: str | dict | list[str | dict] | None = meta.pop("dest", None)
 
         dest = []
         if isinstance(meta_dest, list):
             dest = [Dest.parse(d) for d in meta_dest]
+        elif not meta_dest:
+            dest = []
         else:
             dest = [Dest.parse(meta_dest)]
 
