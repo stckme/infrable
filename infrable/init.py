@@ -2,9 +2,7 @@ from pathlib import Path
 
 INFRA_PY = '''
 import typer
-from infrable import Meta, Service, Switch
-from infrable import UbuntuLatestHost as Host
-from infrable import concurrent, files, paths, readfile
+from infrable import Host, Meta, Service, Switch, concurrent, files, paths, readfile
 from lib.modules import mycloud
 
 # To quickly find the configuration file template on GitHub
@@ -140,9 +138,7 @@ HOSTNAME_TEMPLATE = """
 MYCLOUD_MODULE = '''
 from dataclasses import dataclass
 from typer import Typer
-from infrable import infra
-from infrable.distro.ubuntu import UbuntuLatestHost
-
+from infrable import Host, infra
 
 @dataclass
 class MyCloud:
@@ -156,11 +152,10 @@ class MyCloud:
         return MyCloudUbuntuHost(fqdn=fqdn, ip=ip)
 
 @dataclass
-class MyCloudUbuntuHost(UbuntuLatestHost):
+class MyCloudUbuntuHost(Host):
     """MyCloud's customized Ubuntu server."""
 
-    def setup(self, as_root: bool = False):
-        super().setup(as_root=as_root)
+    def setup(self):
         self.install_mycloud_agent()
 
     def install_mycloud_agent(self):
@@ -178,9 +173,9 @@ def provision_ubuntu_host(fqdn: str, setup: bool = True):
     # Provision the host
     host = cloud.provision_ubuntu_host(fqdn)
     if setup:
-        host.setup(as_root=True)
+        host.setup()
 
-    name = fqdn.split(".")[0]
+    name = fqdn.split(".")[0].replace("-", "_")
     print("Add the host to the infra.py file.")
     print(f"{name} = {repr(host)}")
 '''.strip()

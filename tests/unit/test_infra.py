@@ -1,4 +1,4 @@
-from infrable import Host, Service, UbuntuLatestHost, infra
+from infrable import Host, Service, infra
 
 
 def test_items():
@@ -7,8 +7,7 @@ def test_items():
 
 
 def test_item_types():
-    assert len(infra.item_types) == 13
-    assert infra.item_types[UbuntuLatestHost]["dev_host"].fqdn == "dev.example.com"
+    assert len(infra.item_types) == 11
     assert infra.item_types[Host]["dev_host"].fqdn == "dev.example.com"
     assert infra.item_types[Service]["nginx"].host.fqdn == "dev.example.com"
 

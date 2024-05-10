@@ -460,8 +460,7 @@ codes enhancing 'infrable' to uncharted territories.
 ```python
 from dataclasses import dataclass
 from typer import Typer
-from infrable import infra
-from infrable.distro.ubuntu import UbuntuLatestHost
+from infrable import Host, infra
 
 @dataclass
 class MyCloud:
@@ -475,11 +474,10 @@ class MyCloud:
         return MyCloudUbuntuHost(fqdn=fqdn, ip=ip)
 
 @dataclass
-class MyCloudUbuntuHost(UbuntuLatestHost):
+class MyCloudUbuntuHost(Host):
     """MyCloud's customized Ubuntu server."""
 
-    def setup(self, as_root: bool = False):
-        super().setup(as_root=as_root)
+    def setup(self):
         self.install_mycloud_agent()
 
     def install_mycloud_agent(self):
@@ -497,9 +495,9 @@ def provision_ubuntu_host(fqdn: str, setup: bool = True):
     # Provision the host
     host = cloud.provision_ubuntu_host(fqdn)
     if setup:
-        host.setup(as_root=True)
+        host.setup()
 
-    name = fqdn.split(".")[0]
+    name = fqdn.split(".")[0].replace("-", "_")
     print("Add the host to the infra.py file.")
     print(f"{name} = {repr(host}")
 ```
