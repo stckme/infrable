@@ -10,7 +10,7 @@ from typing import IO, Any, Iterable
 
 import typer
 from click import Choice
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment, FileSystemLoader, Template
 from tqdm import tqdm
 
 from infrable import errors, infra, paths, utils
@@ -45,11 +45,16 @@ def gen(path: Path | None = None, only: Iterable[str] | None = None):
         shutil.rmtree(str(paths.files))
 
     path = path or paths.templates
-    templates = Environment(loader=FileSystemLoader(path))
+
+    if path.is_file():
+        templates = [path.name]
+        path = path.parent
+    else:
+        templates = Environment(loader=FileSystemLoader(path)).list_templates()
 
     _only = list(infra.filtered_hosts(only=only))
     only_hosts = set(h.ip for h in _only) | set(h.fqdn for h in _only if h.fqdn)
-    for t in templates.list_templates():
+    for t in templates:
         # Render the template metadata
         src = path / t
         typer.secho(f"╭ {src}", bold=True)
