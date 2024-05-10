@@ -18,13 +18,14 @@ def deploy(
     path: Path = typer.Argument(None),
     only: list[str] = typer.Option(None),
     yes: bool = False,
+    workers: int | None = None,
 ):
-    files.deploy(path, only=only, yes=yes)
+    files.deploy(path, only=only, yes=yes, workers=workers)
 
 
 @app.command(help=files.recover.__doc__)
-def recover(path: Path = typer.Argument(None)):
-    files.recover(path)
+def recover(path: Path = typer.Argument(None), yes: bool = False):
+    files.recover(path, yes=yes)
 
 
 @app.command(help=files.gen.__doc__)

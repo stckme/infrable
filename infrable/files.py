@@ -214,12 +214,12 @@ def deploy(
     push(yes=yes)
 
 
-def recover(path: Path | None = None):
+def recover(path: Path | None = None, yes: bool = False):
     """[WORKFLOW] revert and push files from backup."""
 
     revert(path)
     print()
-    push()
+    push(yes=yes)
 
 
 def _pull(new):
