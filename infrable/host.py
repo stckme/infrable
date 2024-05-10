@@ -15,13 +15,17 @@ class Host:
 
     fqdn: str | None = None
     admin: str = "root"
+    admin_ssh_key: str | None = None
     meta: Meta = field(default_factory=Meta)
     typer: Typer | None = None
 
     def remote(self, login=None) -> Command:
         login = login or self.admin
         address = f"{login}@{self.ip}"
-        return ssh.bake(address, "-o", "StrictHostKeyChecking=no")
+        cmd = ssh.bake(address, "-o", "StrictHostKeyChecking=no")
+        if self.admin_ssh_key:
+            cmd = cmd.bake("-i", self.admin_ssh_key)
+        return cmd
 
     def format(self, name: str, format: str) -> str:
         return format_item(format).render(name=name, **asdict(self))
