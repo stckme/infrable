@@ -4,7 +4,7 @@ from sh import Command, ssh
 from typer import Typer
 
 from infrable.meta import Meta
-from infrable.utils import format_item
+from infrable.utils import item_formatter
 
 
 @dataclass(unsafe_hash=True, order=True, eq=True)
@@ -28,7 +28,7 @@ class Host:
         return cmd
 
     def format(self, name: str, format: str) -> str:
-        return format_item(format).render(name=name, **asdict(self))
+        return item_formatter(format).render(name=name, **asdict(self))
 
     def __str__(self) -> str:
         host = self.fqdn or self.ip

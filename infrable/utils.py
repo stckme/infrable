@@ -7,7 +7,7 @@ from jinja2 import Template
 T = TypeVar("T")
 
 
-def format_item(template: str) -> Template:
+def item_formatter(template: str) -> Template:
     return Template(
         template,
         variable_start_string="{",
