@@ -3,7 +3,7 @@ from pathlib import Path
 
 from sh import infrable
 
-from infrable import __version__, init, paths
+from infrable import __version__, paths
 
 data = Path("tests/data")
 
@@ -20,12 +20,6 @@ def gen_test_data():
     infrable.files.gen(_out=data.joinpath("post_files_gen"))
     gen_old_files(copy=False)
     infrable.files.diff(_out=data.joinpath("files_diff"))
-
-
-def setup_module():
-    infrable.switch.env.dev()
-    # gen_test_data()
-    init.init()
 
 
 def test_files_gen():

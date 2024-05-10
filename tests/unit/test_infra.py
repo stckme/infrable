@@ -1,9 +1,4 @@
-from infrable import Host, infra, init
-
-
-def setup_module():
-    init.init()
-    infra.switches["env"].set("dev")
+from infrable import Host, Service, UbuntuLatestHost, infra
 
 
 def test_items():
@@ -13,9 +8,9 @@ def test_items():
 
 def test_item_types():
     assert len(infra.item_types) == 13
-    assert infra.item_types[infra.Host]["dev_host"].fqdn == "dev.example.com"
+    assert infra.item_types[UbuntuLatestHost]["dev_host"].fqdn == "dev.example.com"
     assert infra.item_types[Host]["dev_host"].fqdn == "dev.example.com"
-    assert infra.item_types[infra.Service]["nginx"].host.fqdn == "dev.example.com"
+    assert infra.item_types[Service]["nginx"].host.fqdn == "dev.example.com"
 
 
 def test_hosts():

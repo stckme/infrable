@@ -2,7 +2,7 @@ from pathlib import Path
 
 from sh import infrable
 
-from infrable import __version__, init
+from infrable import __version__
 
 data = Path("tests/data")
 
@@ -11,12 +11,6 @@ def gen_test_data():
     infrable.hosts(_out=data.joinpath("hosts"))
     infrable.hosts(repr=True, _out=data.joinpath("hosts_repr"))
     infrable.hosts(format="{name},{ip},{fqdn}", _out=data.joinpath("hosts_format"))
-
-
-def setup_module():
-    infrable.switch.env.dev()
-    # gen_test_data()
-    init.init()
 
 
 def test_hosts():

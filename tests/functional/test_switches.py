@@ -2,7 +2,7 @@ from pathlib import Path
 
 from sh import infrable
 
-from infrable import __version__, init
+from infrable import __version__
 
 data = Path("tests/data")
 
@@ -13,12 +13,6 @@ def gen_test_data():
     infrable.switches(
         format="{name},{foo},{init}", _out=data.joinpath("switches_format")
     )
-
-
-def setup_module():
-    infrable.switch.env.dev()
-    # gen_test_data()
-    init.init()
 
 
 def test_switches():
