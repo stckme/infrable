@@ -15,8 +15,12 @@ def gen_old_files(copy: bool):
         old.write_text(text)
 
 
-def gen_test_data():
+def test_gen_test_data():
     infrable.files.gen(_out=data.joinpath("pre_files_gen"))
+    infrable.files.gen("templates/nginx", _out=data.joinpath("files_gen_nginx"))
+    infrable.files.gen(
+        "templates/nginx/web.j2", _out=data.joinpath("files_gen_nginx_web")
+    )
     infrable.files.gen(_out=data.joinpath("post_files_gen"))
     gen_old_files(copy=False)
     infrable.files.diff(_out=data.joinpath("files_diff"))
@@ -26,6 +30,14 @@ def test_files_gen():
     shutil.rmtree(paths.files, ignore_errors=True)
     assert (
         infrable.files.gen(_tty_out=False) == data.joinpath("pre_files_gen").read_text()
+    )
+    assert (
+        infrable.files.gen("templates/nginx", _tty_out=False)
+        == data.joinpath("files_gen_nginx").read_text()
+    )
+    assert (
+        infrable.files.gen("templates/nginx/web.j2", _tty_out=False)
+        == data.joinpath("files_gen_nginx_web").read_text()
     )
     assert (
         infrable.files.gen(_tty_out=False)
