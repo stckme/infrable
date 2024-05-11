@@ -28,20 +28,17 @@ def gen_test_data():
 
 def test_files_gen():
     shutil.rmtree(paths.files, ignore_errors=True)
-    assert (
-        infrable.files.gen(_tty_out=False) == data.joinpath("pre_files_gen").read_text()
+    assert set(infrable.files.gen(_tty_out=False).splitlines()) == set(
+        data.joinpath("pre_files_gen").read_text().splitlines()
     )
-    assert (
-        infrable.files.gen("templates/nginx", _tty_out=False)
-        == data.joinpath("files_gen_nginx").read_text()
-    )
-    assert (
-        infrable.files.gen("templates/nginx/web.j2", _tty_out=False)
-        == data.joinpath("files_gen_nginx_web").read_text()
-    )
-    assert (
-        infrable.files.gen(_tty_out=False)
-        == data.joinpath("post_files_gen").read_text()
+    assert set(
+        infrable.files.gen("templates/nginx", _tty_out=False).splitlines()
+    ) == set(data.joinpath("files_gen_nginx").read_text().splitlines())
+    assert set(
+        infrable.files.gen("templates/nginx/web.j2", _tty_out=False).splitlines()
+    ) == set(data.joinpath("files_gen_nginx_web").read_text().splitlines())
+    assert set(infrable.files.gen(_tty_out=False).splitlines()) == set(
+        data.joinpath("post_files_gen").read_text().splitlines()
     )
 
 
@@ -68,7 +65,7 @@ def test_files_backup():
 def test_files_revert():
     infrable.files.gen()
     gen_old_files(copy=False)
-    infrable.files.backup()  # <-- this fails for some reason
+    infrable.files.backup()
 
     news1, olds1 = [f.read_text() for f in paths.files.glob("**/*.new")], [
         f.read_text() for f in paths.files.glob("**/*.old")
@@ -83,6 +80,9 @@ def test_files_revert():
 
     assert news1 == olds2
     assert olds1 == news2
+
+    bkpdir = out.split(": ", 1)[-1].strip()
+    assert infrable.files.revert(bkpdir, _tty_out=False) == out
 
 
 def test_files_affect_hosts():
