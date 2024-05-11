@@ -97,17 +97,20 @@ def get_host(name: str) -> Host | None:
     return None
 
 
-def filtered_hosts(only: Iterable[str] | None = None) -> Iterable[Host]:
+def filtered_hosts(only: Iterable[str] | None = None) -> list[Host]:
     """Filter hosts by name, FQDN, IP, service name or host group."""
 
     if not only:
-        return hosts.values()
+        return list(hosts.values())
 
+    filtered = []
     for o in only or []:
         if item := get_host(o):
-            yield item
+            filtered.append(item)
         elif item := host_groups.get(o):
             for h in item:
-                yield h
+                filtered.append(h)
         else:
             raise errors.HostOrServiceNotFoundError(o)
+
+    return filtered
