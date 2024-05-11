@@ -37,13 +37,13 @@ def affected_hosts(only: Iterable[str] | None = None) -> list[Host]:
     return list(hosts.values())
 
 
-def gen(path: Path | None = None, only: Iterable[str] | None = None):
+def gen(path: Path | str | None = None, only: Iterable[str] | None = None):
     """Generate files by rendering the templates with context from infra."""
 
     if paths.files.exists():
         shutil.rmtree(str(paths.files))
 
-    path = path or paths.templates
+    path = Path(path or paths.templates)
 
     if path.is_dir():
         templates = [p for p in path.glob("**/*") if p.is_file()]
@@ -167,7 +167,7 @@ def push(yes: bool = False, workers: int | None = None):
             print()
 
 
-def revert(path: Path | None = None):
+def revert(path: Path | str | None = None):
     """Revert files from backup."""
 
     if path is None:
@@ -175,7 +175,7 @@ def revert(path: Path | None = None):
 
     print(f"reverting from: {path}")
 
-    for bkold in path.glob("**/*.old"):
+    for bkold in Path(path).glob("**/*.old"):
         bknew = Path(str(bkold).removesuffix(".old") + ".new")
 
         old = paths.files / bkold.relative_to(path)
@@ -189,7 +189,7 @@ def revert(path: Path | None = None):
 
 
 def deploy(
-    path: Path | None = None,
+    path: Path | str | None = None,
     only: Iterable[str] | None = None,
     yes: bool = False,
     workers: int | None = None,
@@ -213,7 +213,9 @@ def deploy(
     push(yes=yes, workers=workers)
 
 
-def recover(path: Path | None = None, yes: bool = False, workers: int | None = None):
+def recover(
+    path: Path | str | None = None, yes: bool = False, workers: int | None = None
+):
     """[WORKFLOW] revert and push files from backup."""
 
     revert(path)
