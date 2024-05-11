@@ -15,7 +15,7 @@ def gen_old_files(copy: bool):
         old.write_text(text)
 
 
-def test_gen_test_data():
+def gen_test_data():
     infrable.files.gen(_out=data.joinpath("pre_files_gen"))
     infrable.files.gen("templates/nginx", _out=data.joinpath("files_gen_nginx"))
     infrable.files.gen(
