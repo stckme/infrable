@@ -1,6 +1,6 @@
 from sh import infrable
 
-from infrable import __version__, init
+from infrable import __version__
 
 
 def test_custom_module():

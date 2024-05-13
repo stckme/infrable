@@ -3,7 +3,7 @@ from pathlib import Path
 INFRA_PY = '''
 import typer
 from infrable import Host, Meta, Service, Switch, concurrent, files, paths, readfile
-from lib.modules import mycloud
+from modules import mycloud
 
 # To quickly find the configuration file template on GitHub
 template_prefix = "https://github.com/username/repository/blob/main"
@@ -185,7 +185,7 @@ FILES = {
     "templates/hostname/hostname.j2": HOSTNAME_TEMPLATE,
     "templates/nginx/proxy_params.j2": NGINX_PROXY_PARAMS_TEMPLATE,
     "templates/nginx/web.j2": NGINX_WEB_TEMPLATE,
-    "lib/modules/mycloud.py": MYCLOUD_MODULE,
+    "modules/mycloud.py": MYCLOUD_MODULE,
 }
 
 

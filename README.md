@@ -455,7 +455,7 @@ Fellow programmers could craft **Python modules** and stitch them into the exist
 "infra.py", thus **extending and elevating its functionality**, a synergy of skills and
 codes enhancing 'infrable' to uncharted territories.
 
-**lib/modules/mycloud.py**
+**modules/mycloud.py**
 
 ```python
 from dataclasses import dataclass
@@ -507,7 +507,7 @@ Plugging the module in infra.py:
 **infra.py**
 
 ```python
-from lib.modules import mycloud
+from modules import mycloud
 
 # Clouds/ ----------------------------------------------------------------------
 cloud = mycloud.MyCloud(secret_api_key=readfile("secrets/mycloud/secret_api_key"))
