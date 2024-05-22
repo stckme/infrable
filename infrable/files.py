@@ -232,7 +232,7 @@ def _pull(new: Path) -> tuple[Path, str]:
     if not host:
         raise errors.InvalidDestinationError(dest=dest)
     addr = f"{host.admin}@{host.ip}"
-    _sudo_pull_file(addr, src, dest)
+    _sudo_pull_file(addr, src, dest, admin_ssh_key=host.admin_ssh_key)
     return new, dest
 
 
@@ -249,7 +249,9 @@ def _push(new: Path, remote_dest: str) -> tuple[Path, str]:
     if not host:
         raise errors.InvalidDestinationError(dest)
     addr = f"{host.admin}@{host.ip}"
-    _sudo_push_file(addr, new, dest, chown=chown, chmod=chmod)
+    _sudo_push_file(
+        addr, new, dest, chown=chown, chmod=chmod, admin_ssh_key=host.admin_ssh_key
+    )
     return new, remote_dest
 
 
@@ -309,11 +311,17 @@ def _sudo_exec(
     )
 
 
-def _sudo_pull_file(address: str, remote_src: str, local_dest: str):
+def _sudo_pull_file(
+    address: str, remote_src: str, local_dest: str, admin_ssh_key: str | None = None
+):
+    options = None
+    if admin_ssh_key:
+        options = ["-i", admin_ssh_key]
     with Path(local_dest).open("w") as f:
         _sudo_exec(
             address,
             f"sudo cat -- {q(remote_src)} || true",
+            options=options,
             stdout=f,
             stderr=sp.PIPE,
             stdin=sp.PIPE,
@@ -326,6 +334,7 @@ def _sudo_push_file(
     remote_dest,
     chmod: str | None = None,
     chown: str | None = None,
+    admin_ssh_key: str | None = None,
 ):
     ts = time.time()
     rand = random.randint(0, 9999)
@@ -344,5 +353,9 @@ def _sudo_push_file(
     cmd += f" && sudo mkdir -p -- {q(parent)}"
     cmd += f" && sudo mv -f -- {q(tmpname)} {q(remote_dest)}"
 
+    options = None
+    if admin_ssh_key:
+        options = ["-i", admin_ssh_key]
+
     with Path(local_src).open("r") as f:
-        _sudo_exec(address, cmd, stdin=f).check_returncode()
+        _sudo_exec(address, cmd, options=options, stdin=f).check_returncode()
