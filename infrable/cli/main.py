@@ -67,8 +67,16 @@ if IS_PROJECT_DIR:
 
     if sw := infra.switches.get("env"):
         # Alias for 'infrable switch env'
-        def env(value: str = typer.Argument(None, click_type=Choice(list(sw.options)))):
+        def env(
+            value: str = typer.Argument(None, click_type=Choice(list(sw.options))),
+            options: bool = False,
+        ):
             """Alias for `infrable switch env`."""
+
+            if options:
+                for opt in sorted(sw.options):
+                    print(opt)
+                return
 
             if value is None:
                 print(sw())
