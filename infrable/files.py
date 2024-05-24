@@ -4,7 +4,6 @@ import subprocess as sp
 import time
 from datetime import datetime
 from difflib import unified_diff
-from glob import glob
 from pathlib import Path
 from shlex import quote as q
 from typing import IO, Any, Iterable, Iterator
@@ -26,7 +25,7 @@ def _iter_files(root: Path, pattern: str) -> Iterator[Path]:
         if path.is_file():
             yield path
         elif path.is_symlink():
-            yield from _iter_files(path.resolve(), pattern)
+            yield from _iter_files(path, pattern)
 
 
 def affected_hosts(only: Iterable[str] | None = None) -> list[Host]:
