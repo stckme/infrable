@@ -125,3 +125,16 @@ def test_symlinks():
     except Exception as e:
         os.remove(paths.templates / "symlink")
         raise e
+
+
+def test_hidden_files():
+    hiddendir = paths.templates.joinpath(".config")
+    hiddendir.mkdir(parents=True, exist_ok=True)
+    hiddendir.joinpath(".hiddenfile").touch(exist_ok=True)
+
+    try:
+        with pytest.raises(Exception) as e:
+            infrable.files.gen()
+    except Exception as e:
+        shutil.rmtree(hiddendir, ignore_errors=True)
+        raise e

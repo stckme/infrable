@@ -4,7 +4,7 @@ import subprocess as sp
 import time
 from datetime import datetime
 from difflib import unified_diff
-from glob import glob
+from glob import iglob
 from pathlib import Path
 from shlex import quote as q
 from typing import IO, Any, Iterable, Iterator
@@ -21,7 +21,7 @@ from infrable.template import Metadata, render
 def _iter_files(root: Path | str, pattern: str) -> Iterator[Path]:
     # NOTE: Path.glob doesn't traverse symlinks
     # See: https://bugs.python.org/issue33428
-    for path in glob(f"{root}/{pattern}", recursive=True):
+    for path in iglob(f"{root}/{pattern}", recursive=True):
         path = Path(path)
         if path.is_file():
             yield path
