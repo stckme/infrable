@@ -4,7 +4,7 @@ import subprocess as sp
 import time
 from datetime import datetime
 from difflib import unified_diff
-from glob import iglob
+from glob import glob
 from pathlib import Path
 from shlex import quote as q
 from typing import IO, Any, Iterable, Iterator
@@ -18,13 +18,15 @@ from infrable.host import Host
 from infrable.template import Metadata, render
 
 
-def _iter_files(root: Path | str, pattern: str) -> Iterator[Path]:
+def _iter_files(root: Path, pattern: str) -> Iterator[Path]:
     # NOTE: Path.glob doesn't traverse symlinks
     # See: https://bugs.python.org/issue33428
-    for path in iglob(f"{root}/{pattern}", recursive=True):
+    for path in root.glob(pattern):
         path = Path(path)
         if path.is_file():
             yield path
+        elif path.is_symlink():
+            yield from _iter_files(path.resolve(), pattern)
 
 
 def affected_hosts(only: Iterable[str] | None = None) -> list[Host]:
