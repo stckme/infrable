@@ -4,9 +4,10 @@ import subprocess as sp
 import time
 from datetime import datetime
 from difflib import unified_diff
+from glob import glob
 from pathlib import Path
 from shlex import quote as q
-from typing import IO, Any, Iterable
+from typing import IO, Any, Iterable, Iterator
 
 import typer
 from click import Choice
@@ -17,6 +18,15 @@ from infrable.host import Host
 from infrable.template import Metadata, render
 
 
+def _iter_files(root: Path | str, pattern: str) -> Iterator[Path]:
+    # NOTE: Path.glob doesn't traverse symlinks
+    # See: https://bugs.python.org/issue33428
+    for path in glob(f"{root}/{pattern}", recursive=True):
+        path = Path(path)
+        if path.is_file():
+            yield path
+
+
 def affected_hosts(only: Iterable[str] | None = None) -> list[Host]:
     """List the affected hosts as per the files diff."""
 
@@ -24,7 +34,7 @@ def affected_hosts(only: Iterable[str] | None = None) -> list[Host]:
     only_hosts = set(h.ip for h in _only) | set(h.fqdn for h in _only if h.fqdn)
 
     hosts = {}
-    for new in paths.files.glob("**/*.new"):
+    for new in _iter_files(paths.files, "**/*.new"):
         old = _old_path(new)
         if not _diff(new=new, old=old):
             continue
@@ -46,7 +56,7 @@ def gen(path: Path | str | None = None, only: Iterable[str] | None = None):
     path = Path(path or paths.templates)
 
     if path.is_dir():
-        templates = [p for p in path.glob("**/*") if p.is_file()]
+        templates = [p for p in _iter_files(path, "**/*")]
     else:
         templates = [path]
 
@@ -90,10 +100,10 @@ def pull(workers: int | None = None):
     if not paths.files.exists():
         return
 
-    for old in paths.files.glob("**/*.old"):
+    for old in _iter_files(paths.files, "**/*.old"):
         old.unlink()
 
-    new_files = list(paths.files.glob("**/*.new"))
+    new_files = list(_iter_files(paths.files, "**/*.new"))
     with utils.concurrentcontext(_pull, new_files, workers=workers) as results:
         for new, dest in tqdm(results, total=len(new_files)):
             typer.secho(f"╭ {new}", bold=True)
@@ -120,7 +130,7 @@ def backup():
 def diff():
     """Diff the generated files with the pulled versions."""
 
-    for new in paths.files.glob("**/*.new"):
+    for new in _iter_files(paths.files, "**/*.new"):
         old = _old_path(new)
         if d := _diff(new=new, old=old):
             _print_diff(d)
@@ -131,7 +141,7 @@ def push(yes: bool = False, workers: int | None = None):
     """Diff and push the generated files to the remote server."""
 
     to_push = []
-    for new in paths.files.glob("**/*.new"):
+    for new in _iter_files(paths.files, "**/*.new"):
         remote, loc = (
             str(new.relative_to(paths.files)).removesuffix(".new").split("/", 1)
         )
@@ -175,7 +185,7 @@ def revert(path: Path | str | None = None):
 
     print(f"reverting from: {path}")
 
-    for bkold in Path(path).glob("**/*.old"):
+    for bkold in _iter_files(path, "**/*.old"):
         bknew = Path(str(bkold).removesuffix(".old") + ".new")
 
         old = paths.files / bkold.relative_to(path)

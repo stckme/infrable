@@ -1,6 +1,8 @@
+import os
 import shutil
 from pathlib import Path
 
+import pytest
 from sh import infrable
 
 from infrable import __version__, paths
@@ -113,3 +115,13 @@ def test_files_affect_hosts():
     assert (
         infrable.files("affected-hosts", only="prod_host", _tty_out=False).strip() == ""
     )
+
+
+def test_symlinks():
+    os.symlink("../tests/data", paths.templates / "symlink")
+    try:
+        with pytest.raises(Exception) as e:
+            infrable.files.gen()
+    except Exception as e:
+        os.remove(paths.templates / "symlink")
+        raise e

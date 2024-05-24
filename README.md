@@ -437,7 +437,7 @@ Managing secrets:
 echo /secrets/ >> .gitignore
 
 # Update the secrets by hand
-vim secrets/web/secret_key
+vim secrets/common/secret_key
 ```
 
 ## Chapter 8 - Custom Modules
