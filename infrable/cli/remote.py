@@ -1,4 +1,4 @@
-from typing import Iterable
+from typing import Iterable, Optional
 
 import typer
 from tqdm import tqdm
@@ -9,7 +9,7 @@ app = typer.Typer(no_args_is_help=True)
 
 
 @app.command(name="-")
-def from_stdin(command: str, workers: int | None = None):
+def from_stdin(command: str, workers: Optional[int] = None):
     """Execute a script on the list of hosts passed via stdin."""
 
     hosts = []
@@ -25,7 +25,9 @@ def from_stdin(command: str, workers: int | None = None):
 
 @app.command()
 def infra_hosts(
-    command: str, only: list[str] = typer.Option(None), workers: int | None = None
+    command: str,
+    only: Optional[list[str]] = None,
+    workers: Optional[int] = None,
 ):
     """Execute a script on the hosts listed in the infra."""
 
@@ -38,7 +40,9 @@ def infra_hosts(
 
 @app.command()
 def affected_hosts(
-    command: str, only: list[str] = typer.Option(None), workers: int | None = None
+    command: str,
+    only: Optional[list[str]] = None,
+    workers: Optional[int] = None,
 ):
     """Execute a script on the affected hosts in the last deployment."""
 
@@ -54,7 +58,7 @@ def affected_hosts(
 for name, group in infra.host_groups.items():
 
     def groupmain(
-        command: str, only: list[str] = typer.Option(None), workers: int | None = None
+        command: str, only: Optional[list[str]] = None, workers: Optional[int] = None
     ):
         hosts = group
         if only:

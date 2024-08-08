@@ -1,3 +1,5 @@
+from typing import Optional
+
 import typer
 from click import Choice
 
@@ -23,7 +25,7 @@ if IS_PROJECT_DIR:
     from infrable.cli import files, remote, switch
 
     @app.command()
-    def hosts(format: str | None = None, repr: bool = False):
+    def hosts(format: Optional[str] = None, repr: bool = False):
         """List all hosts in the infrastructure."""
 
         for name, host in infra.hosts.items():
@@ -35,7 +37,7 @@ if IS_PROJECT_DIR:
                 print(f"{name} = {host}")
 
     @app.command()
-    def services(format: str | None = None, repr: bool = False):
+    def services(format: Optional[str] = None, repr: bool = False):
         """List all services in the infrastructure."""
 
         for name, service in infra.services.items():
@@ -47,7 +49,7 @@ if IS_PROJECT_DIR:
                 print(f"{name} = {service}")
 
     @app.command()
-    def switches(format: str | None = None, repr: bool = False):
+    def switches(format: Optional[str] = None, repr: bool = False):
         """List all switches in the infrastructure."""
 
         for name, switch in infra.switches.items():

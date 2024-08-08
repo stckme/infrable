@@ -27,7 +27,7 @@ dependencies = [
 Homepage = 'https://github.com/stckme/infrable'
 
 [project.optional-dependencies]
-devel = ['tox', 'pytest', 'pytest-cov', 'black', 'isort', 'build', 'twine']
+devel = ['tox', 'pytest', 'pytest-cov', 'black', 'isort', 'build', 'twine', "flake8"]
 
 [project.scripts]
 infrable = 'infrable.cli.main:app'
