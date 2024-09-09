@@ -55,9 +55,8 @@ def affected_hosts(
     _execute_batch(hosts, command=command, workers=workers)
 
 
-for name, group in infra.host_groups.items():
-
-    def groupmain(
+def _create_host_groups_command(group):
+    def main(
         command: str, only: Optional[list[str]] = None, workers: Optional[int] = None
     ):
         hosts = group
@@ -67,17 +66,27 @@ for name, group in infra.host_groups.items():
 
         _execute_batch(hosts, command=command, workers=workers)
 
+    return main
+
+
+for name, group in infra.host_groups.items():
     help = f"Execute a script on {name} hosts."
-    app.command(name=name, help=help)(groupmain)
+    cmd = _create_host_groups_command(group)
+    app.command(name=name, help=help)(cmd)
+
+
+def _create_host_command(host):
+    def main(command: str):
+        host.remote()(command, _fg=True)
+
+    return main
 
 
 for name, host in infra.hosts.items():
 
-    def hostmaain(command: str):
-        host.remote()(command, _fg=True)
-
     help = f"Execute a script on {name}."
-    app.command(name=name, help=help)(hostmaain)
+    cmd = _create_host_command(host)
+    app.command(name=name, help=help)(cmd)
 
 
 def _execute_batch(hosts: Iterable[Host], command: str, workers: int | None):
