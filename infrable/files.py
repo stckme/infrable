@@ -331,7 +331,7 @@ def _sudo_pull_file(
     with Path(local_dest).open("w") as f:
         _sudo_exec(
             address,
-            f"sudo cat -- {q(remote_src)} || true",
+            f"sudo test -f {q(remote_src)} && sudo cat -- {q(remote_src)} || true",
             options=options,
             stdout=f,
             stderr=sp.PIPE,
