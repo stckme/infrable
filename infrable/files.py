@@ -186,7 +186,7 @@ def revert(path: Path | str | None = None):
 
     print(f"reverting from: {path}")
 
-    for bkold in _iter_files(path, "**/*.old"):
+    for bkold in _iter_files(Path(path), "**/*.old"):
         bknew = Path(str(bkold).removesuffix(".old") + ".new")
 
         old = paths.files / bkold.relative_to(path)

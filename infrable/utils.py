@@ -1,10 +1,11 @@
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
-from typing import Any, Callable, Generator, Iterable, Iterator, TypeVar
+from typing import Callable, Generator, Iterable, Iterator, TypeVar
 
 from jinja2 import Template
 
-T = TypeVar("T")
+T1 = TypeVar("T1")
+T2 = TypeVar("T2")
 
 
 def item_formatter(template: str) -> Template:
@@ -20,11 +21,11 @@ def item_formatter(template: str) -> Template:
 
 @contextmanager
 def concurrentcontext(
-    function: Callable[[T], Any],
-    generator: Iterable[T],
+    function: Callable[[T1], T2],
+    generator: Iterable[T1],
     *,
     workers: int | None = None,
-) -> Generator[Iterator[Any], Any, None]:
+) -> Generator[Iterator[T2], None, None]:
     """With context, run a function on a batch of arguments concurrently."""
 
     with ThreadPoolExecutor(max_workers=workers) as executor:
@@ -32,11 +33,11 @@ def concurrentcontext(
 
 
 def concurrent(
-    function: Callable[[T], Any],
-    generator: Iterable[T],
+    function: Callable[[T1], T2],
+    generator: Iterable[T1],
     *,
     workers: int | None = None,
-) -> list:
+) -> list[T2]:
     """Run a functions on a batch of arguments in concurrently."""
 
     with concurrentcontext(function, generator, workers=workers) as results:

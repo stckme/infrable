@@ -22,7 +22,7 @@ class Host:
     def remote(self, login=None) -> Command:
         login = login or self.admin
         address = f"{login}@{self.ip}"
-        cmd = ssh.bake(address, "-o", "StrictHostKeyChecking=no")
+        cmd = ssh.bake(address, "-o", "StrictHostKeyChecking=no")  # type: ignore
         if self.admin_ssh_key:
             cmd = cmd.bake("-i", self.admin_ssh_key)
         return cmd
