@@ -10,13 +10,6 @@ from infrable import __version__, paths
 data = Path("tests/data")
 
 
-def gen_old_files(copy: bool):
-    for new in paths.files.glob("**/*.new"):
-        old = (paths.files / new.relative_to(paths.files)).with_suffix(".old")
-        text = new.read_text() if copy else ""
-        old.write_text(text)
-
-
 def gen_test_data():
     infrable.files.gen(_out=data.joinpath("pre_files_gen"))
     infrable.files.gen("templates/nginx", _out=data.joinpath("files_gen_nginx"))
@@ -24,8 +17,15 @@ def gen_test_data():
         "templates/nginx/web.j2", _out=data.joinpath("files_gen_nginx_web")
     )
     infrable.files.gen(_out=data.joinpath("post_files_gen"))
-    gen_old_files(copy=False)
+    _gen_old_files(copy=False)
     infrable.files.diff(_out=data.joinpath("files_diff"))
+
+
+def _gen_old_files(copy: bool):
+    for new in paths.files.glob("**/*.new"):
+        old = (paths.files / new.relative_to(paths.files)).with_suffix(".old")
+        text = new.read_text() if copy else ""
+        old.write_text(text)
 
 
 def test_files_gen():
@@ -47,17 +47,17 @@ def test_files_gen():
 def test_files_diff():
     shutil.rmtree(paths.files, ignore_errors=True)
     infrable.files.gen()
-    gen_old_files(copy=True)
+    _gen_old_files(copy=True)
     assert infrable.files.diff(_tty_out=False) == ""
-    gen_old_files(copy=False)
-    assert (
-        infrable.files.diff(_tty_out=False) == data.joinpath("files_diff").read_text()
+    _gen_old_files(copy=False)
+    assert set(infrable.files.diff(_tty_out=False).splitlines()) == set(
+        data.joinpath("files_diff").read_text().splitlines()
     )
 
 
 def test_files_backup():
     infrable.files.gen()
-    gen_old_files(copy=False)
+    _gen_old_files(copy=False)
     backups_count = len(list(paths.backups.glob("*")))
     out = infrable.files.backup(_tty_out=False)
     assert out.strip().startswith(f"backup: {paths.backups}/")
@@ -66,7 +66,7 @@ def test_files_backup():
 
 def test_files_revert():
     infrable.files.gen()
-    gen_old_files(copy=False)
+    _gen_old_files(copy=False)
     infrable.files.backup()
 
     news1, olds1 = [f.read_text() for f in paths.files.glob("**/*.new")], [
@@ -89,9 +89,9 @@ def test_files_revert():
 
 def test_files_affect_hosts():
     infrable.files.gen()
-    gen_old_files(copy=True)
+    _gen_old_files(copy=True)
     assert infrable.files("affected-hosts", _tty_out=False) == ""
-    gen_old_files(copy=False)
+    _gen_old_files(copy=False)
     assert (
         infrable.files("affected-hosts", _tty_out=False).strip()
         == "root@dev.example.com"

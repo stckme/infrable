@@ -41,6 +41,7 @@ class Metadata:
     chown: Optional[str] = None
     chmod: Optional[str] = None
     skip: bool = False
+    execute: bool = False
 
     _raw: str = ""
     _rendered: str = ""
@@ -96,6 +97,8 @@ class Metadata:
         chmod = dest.chmod or self.chmod
         if chmod:
             dict_["chmod"] = str(chmod)
+        if self.execute:
+            dict_["execute"] = self.execute
 
         header = yaml.safe_dump(dict_, default_flow_style=False)
         header = "\n".join(f"# {l}" for l in header.splitlines())
