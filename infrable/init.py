@@ -82,7 +82,7 @@ NGINX_PROXY_PARAMS_TEMPLATE = """
 # src: {{ template_prefix }}/{{ _template.src }}
 # dest:
 # {% for host in managed_hosts %}
-#   - loc: {{ host }}:/etc/nginx/proxy_params
+#   - {{ host }}:/etc/nginx/proxy_params
 # {% endfor %}
 # chmod: 644
 # chown: root:root

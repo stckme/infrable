@@ -140,7 +140,7 @@ server {
 
 # ---
 # src: {{ template_prefix }}/{{ _template.src }}
-# dest: {{ nginx.host }}:/root/init/robots.txt.sh
+# dest: {{ dev_nginx.host }}:/root/init/robots.txt.sh
 # execute: true
 # ---
 
@@ -403,7 +403,7 @@ Updating the templates to use the switchable values:
 # src: {{ template_prefix }}/{{ _template.src }}
 # dest:
 # {% for host in managed_hosts %}  # <-- Yes, you can
-#   - loc: {{ host }}:/etc/nginx/proxy_params
+#   - {{ host }}:/etc/nginx/proxy_params
 # {% endfor %}
 # chmod: 644
 # chown: root:root
