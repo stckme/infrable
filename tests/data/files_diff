@@ -18,7 +18,7 @@
 
 +++ .infrable/files/root@dev.example.com/root/init/robots.txt.sh.new
 
-@@ -0,0 +1,19 @@
+@@ -0,0 +1,20 @@
 
 +#!/usr/bin/env bash
 +
@@ -26,6 +26,7 @@
 +
 +# ---
 +# dest: root@dev.example.com:/root/init/robots.txt.sh
++# execute: true
 +# src: https://github.com/username/repository/blob/main/templates/nginx/robots.txt.sh.j2
 +# ---
 +
