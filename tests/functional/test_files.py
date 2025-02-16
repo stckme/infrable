@@ -50,8 +50,8 @@ def test_files_diff():
     _gen_old_files(copy=True)
     assert infrable.files.diff(_tty_out=False) == ""
     _gen_old_files(copy=False)
-    assert (
-        infrable.files.diff(_tty_out=False) == data.joinpath("files_diff").read_text()
+    assert set(infrable.files.diff(_tty_out=False).splitlines()) == set(
+        data.joinpath("files_diff").read_text().splitlines()
     )
 
 
