@@ -113,8 +113,35 @@ server {
         proxy_pass http://127.0.0.1:{{ web.port }};
         include proxy_params;
     }
+
+    location /robots.txt {
+        root /var/www/html;
+    }
 }
 """.strip()
+
+NGINX_ROBOTS_TXT_TEMPLATE = """
+#!/usr/bin/env bash
+
+# vim: syn=sh
+
+# ---
+# src: {{ template_prefix }}/{{ _template.src }}
+# dest: {{ nginx.host }}:/root/init/robots.txt.sh
+# execute: true
+# ---
+
+set -euxo pipefail
+
+if [ ! -d /var/www/html ]; then
+    mkdir -p /var/www/html
+fi
+
+cat > /var/www/html/robots.txt <<EOF
+User-agent: *
+Disallow: /
+EOF
+"""
 
 HOSTNAME_TEMPLATE = """
 # vim: syn=ansible.vim
@@ -185,6 +212,7 @@ FILES = {
     "templates/hostname/hostname.j2": HOSTNAME_TEMPLATE,
     "templates/nginx/proxy_params.j2": NGINX_PROXY_PARAMS_TEMPLATE,
     "templates/nginx/web.j2": NGINX_WEB_TEMPLATE,
+    "templates/nginx/robots.txt.sh.j2": NGINX_ROBOTS_TXT_TEMPLATE,
     "modules/mycloud.py": MYCLOUD_MODULE,
 }
 
@@ -196,5 +224,5 @@ def init():
             print(f"Skipping {path}, Exists.")
             continue
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(content)
+        path.write_text(content.strip())
         print(f"Created {path}.")

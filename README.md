@@ -124,7 +124,36 @@ server {
         proxy_pass http://127.0.0.1:{{ dev_web.port }};
         include proxy_params;
     }
+
+    location /robots.txt {
+        root /var/www/html;
+    }
 }
+```
+
+**templates/nginx/robots.txt.sh.j2**
+
+```bash
+#!/usr/bin/env bash
+
+# vim: syn=sh
+
+# ---
+# src: {{ template_prefix }}/{{ _template.src }}
+# dest: {{ nginx.host }}:/root/init/robots.txt.sh
+# execute: true
+# ---
+
+set -euxo pipefail
+
+if [ ! -d /var/www/html ]; then
+    mkdir -p /var/www/html
+fi
+
+cat > /var/www/html/robots.txt <<EOF
+User-agent: *
+Disallow: /
+EOF
 ```
 
 NOTE: The `_template.src` is a special variable, available in all templates.

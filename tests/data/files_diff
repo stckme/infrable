@@ -14,6 +14,32 @@
 +# ---
 +dev
 
+--- .infrable/files/root@dev.example.com/root/init/robots.txt.sh.old
+
++++ .infrable/files/root@dev.example.com/root/init/robots.txt.sh.new
+
+@@ -0,0 +1,19 @@
+
++#!/usr/bin/env bash
++
++# vim: syn=sh
++
++# ---
++# dest: root@dev.example.com:/root/init/robots.txt.sh
++# src: https://github.com/username/repository/blob/main/templates/nginx/robots.txt.sh.j2
++# ---
++
++set -euxo pipefail
++
++if [ ! -d /var/www/html ]; then
++    mkdir -p /var/www/html
++fi
++
++cat > /var/www/html/robots.txt <<EOF
++User-agent: *
++Disallow: /
++EOF
+
 --- .infrable/files/root@dev.example.com/etc/nginx/proxy_params.old
 
 +++ .infrable/files/root@dev.example.com/etc/nginx/proxy_params.new
@@ -37,7 +63,7 @@
 
 +++ .infrable/files/root@dev.example.com/etc/nginx/sites-enabled/web.new
 
-@@ -0,0 +1,20 @@
+@@ -0,0 +1,24 @@
 
 +# vim: syn=nginx
 +
@@ -57,6 +83,10 @@
 +    location / {
 +        proxy_pass http://127.0.0.1:8080;
 +        include proxy_params;
++    }
++
++    location /robots.txt {
++        root /var/www/html;
 +    }
 +}
 

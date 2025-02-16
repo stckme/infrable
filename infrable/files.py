@@ -261,7 +261,13 @@ def _push(new: Path, remote_dest: str) -> tuple[Path, str]:
         raise errors.InvalidDestinationError(dest)
     addr = f"{host.admin}@{host.ip}"
     _sudo_push_file(
-        addr, new, dest, chown=chown, chmod=chmod, admin_ssh_key=host.admin_ssh_key
+        addr,
+        new,
+        dest,
+        chown=chown,
+        chmod=chmod,
+        admin_ssh_key=host.admin_ssh_key,
+        execute=meta.execute,
     )
     return new, remote_dest
 
@@ -346,6 +352,7 @@ def _sudo_push_file(
     chmod: str | None = None,
     chown: str | None = None,
     admin_ssh_key: str | None = None,
+    execute: bool = False,
 ):
     ts = time.time()
     rand = random.randint(0, 9999)
@@ -363,6 +370,11 @@ def _sudo_push_file(
 
     cmd += f" && sudo mkdir -p -- {q(parent)}"
     cmd += f" && sudo mv -f -- {q(tmpname)} {q(remote_dest)}"
+
+    if execute:
+        if not chown:
+            cmd += f" && sudo chmod u+rx -- {q(remote_dest)}"
+        cmd += f" && sudo -- {q(remote_dest)}"
 
     options = None
     if admin_ssh_key:

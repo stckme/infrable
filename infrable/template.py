@@ -41,6 +41,7 @@ class Metadata:
     chown: Optional[str] = None
     chmod: Optional[str] = None
     skip: bool = False
+    execute: bool = False
 
     _raw: str = ""
     _rendered: str = ""
