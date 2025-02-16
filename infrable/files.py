@@ -372,7 +372,7 @@ def _sudo_push_file(
     cmd += f" && sudo mv -f -- {q(tmpname)} {q(remote_dest)}"
 
     if execute:
-        if not chown:
+        if not chmod:
             cmd += f" && sudo chmod u+rx -- {q(remote_dest)}"
         cmd += f" && sudo -- {q(remote_dest)}"
 

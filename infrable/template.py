@@ -97,6 +97,8 @@ class Metadata:
         chmod = dest.chmod or self.chmod
         if chmod:
             dict_["chmod"] = str(chmod)
+        if self.execute:
+            dict_["execute"] = self.execute
 
         header = yaml.safe_dump(dict_, default_flow_style=False)
         header = "\n".join(f"# {l}" for l in header.splitlines())
