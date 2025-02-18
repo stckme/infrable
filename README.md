@@ -2,8 +2,7 @@
 
 Infrable is an Infrastructure as Code tool written in Python. It lets you manage hosts,
 services, configuration templates, deployments, and more—all from a single Python file
-(named `infra.py`). This guide is designed to help you get started, even if you’re new to
-infrastructure as code.
+(named `infra.py`).
 
 [![PyPI version](https://img.shields.io/pypi/v/infrable.svg)](https://pypi.org/project/infrable)
 
