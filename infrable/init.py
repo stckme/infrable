@@ -2,7 +2,7 @@ from pathlib import Path
 
 INFRA_PY = '''
 import typer
-from infrable import Host, Meta, Service, Switch, concurrent, files, paths, readfile
+from infrable import Host, Meta, Service, Switch, concurrentcontext, files, paths, readfile
 from modules import mycloud
 
 # To quickly find the configuration file template on GitHub
@@ -57,7 +57,11 @@ def reload_nginx():
     """[TASK] Reload nginx: infrable nginx reload"""
 
     assert nginx.host, "Service must have a host to reload"
+
+    # Run: sudo nginx -t
     nginx.host.remote().sudo.nginx("-t")
+
+    # Run: sudo systemctl reload nginx
     nginx.host.remote().sudo.systemctl.reload.nginx()
 # Tasks/ -----------------------------------------------------------------------
 
@@ -67,11 +71,15 @@ deploy = typer.Typer(help="Deployment workflows.")
 def deploy_nginx():
     """[WORKFLOW] Deploy nginx files: infrable deploy nginx"""
 
+    # Deploy the Nginx configuration files
     files.deploy(paths.templates / "nginx")
+
+    # Test the Nginx configuration and reload the service concurrently
     cmd = "sudo nginx -t && sudo systemctl reload nginx && echo success || echo failed"
     fn = lambda host: (host, host.remote().sudo(cmd))
-    for host, result in concurrent(fn, files.affected_hosts()):
-        print(f"{host}: {result}")
+    with concurrentcontext(fn, files.affected_hosts()) as results:
+        for host, result in results:
+            print(f"{host}: {result}")
 # /Workflows -----------------------------------------------------------------------
 '''.strip()
 
