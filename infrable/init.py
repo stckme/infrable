@@ -88,10 +88,7 @@ NGINX_PROXY_PARAMS_TEMPLATE = """
 
 # ---
 # src: {{ template_prefix }}/{{ _template.src }}
-# dest:
-# {% for host in managed_hosts %}
-#   - {{ host }}:/etc/nginx/proxy_params
-# {% endfor %}
+# dest: {{ nginx.host }}:/etc/nginx/proxy_params
 # chmod: 644
 # chown: root:root
 # ---
@@ -147,7 +144,7 @@ fi
 
 cat > /var/www/html/robots.txt <<EOF
 User-agent: *
-Disallow: /
+Disallow: {% if current_env != prod %}/{% endif %}
 EOF
 """
 
