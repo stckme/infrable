@@ -5,6 +5,8 @@ services, configuration templates, deployments, and more—all from a single Pyt
 (named `infra.py`). This guide is designed to help you get started, even if you’re new to
 infrastructure as code.
 
+[![PyPI version](https://img.shields.io/pypi/v/infrable.svg)](https://pypi.org/project/infrable)
+
 ---
 
 ## Prerequisites
