@@ -1,7 +1,7 @@
 [project]
 dynamic = ['version']
 name = 'infrable'
-description = "Hanny's legendary infrastructure as code solution."
+description = "Manage infrastructure as a Python dev"
 keywords = ['declarative', 'infrastructure', 'management']
 homepage = 'https://github.com/stckme/infrable'
 authors = [
