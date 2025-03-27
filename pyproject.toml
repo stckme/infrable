@@ -12,7 +12,7 @@ maintainers = [
 ]
 readme = 'README.md'
 license = {file = 'LICENSE'}
-requires-python = '>=3.10'
+requires-python = '>=3.12'
 dependencies = [
   'jinja2',
   'sh',

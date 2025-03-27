@@ -10,7 +10,7 @@ services, configuration templates, deployments, and more—all from a single Pyt
 
 ## Prerequisites
 
-- **Python 3.10 or newer**
+- **Python 3.12 or newer**
 - Basic command-line knowledge
 
 ---
