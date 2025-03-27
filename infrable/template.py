@@ -65,7 +65,9 @@ class Metadata:
 
         raw = raw.strip()
 
-        kwargs["_template"] = {"src": str(path)}
+        kwargs["_template"] = {
+            "src": str(path.resolve().relative_to(Path.cwd(), walk_up=True))
+        }
         rendered = _jinja_render(raw, *args, **kwargs)
         yamllines = [line.removeprefix("# ") for line in rendered.splitlines()]
         if not yamllines:
