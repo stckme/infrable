@@ -157,6 +157,24 @@ EOF
 > - The value of `disallow` is set based on the context variables declared in the
 >   template header.
 
+### Atomic Partial Edits with Blocks
+
+Infrable supports atomic partial editing of files using a `block` in the template metadata. This ensures that multiple runs of the same template will produce the same result without duplicating the content.
+
+**Example: Adding a block to `/etc/hosts` (`templates/hosts.j2`):**
+
+```
+# ---
+# src: {{ template_prefix }}/{{ _template.src }}
+# dest: {{ dev_host }}:/etc/hosts
+# block: |
+#   127.0.0.1 localhost
+#   {{ dev_host.ip }} {{ dev_host.fqdn }}
+# ---
+```
+
+When this template is deployed, Infrable will ensure that the block of text is present in the `/etc/hosts` file on the `dev_host`. If the block already exists, it will be updated. If it doesn't exist, it will be appended to the file.
+
 ---
 
 ## 4. Deploying and Recovering Files

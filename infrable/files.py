@@ -12,9 +12,8 @@ import typer
 from click import Choice
 from tqdm import tqdm
 
-from infrable import errors, infra, paths, utils
+from infrable import errors, infra, paths, remote, template, utils
 from infrable.host import Host
-from infrable.template import Metadata, render
 
 
 def _iter_files(root: Path, pattern: str) -> Iterator[Path]:
@@ -67,7 +66,7 @@ def gen(path: Path | str | None = None, only: Iterable[str] | None = None):
         # Render the template metadata
         typer.secho(f"╭ {src}", bold=True)
 
-        meta = Metadata.parse(src, infra.items)
+        meta = template.Metadata.parse(src, infra.items)
 
         if meta.skip:
             print("╰ skip: true")
@@ -89,7 +88,12 @@ def gen(path: Path | str | None = None, only: Iterable[str] | None = None):
                 continue
             outpath = paths.files / remote / (loc.removeprefix("/") + ".new")
             outpath.parent.mkdir(exist_ok=True, parents=True)
-            rendered = render(src, dest.loc, infra.items, **dest.ctx)
+
+            if meta.block:
+                rendered = template.apply(src, dest.loc, infra.items, **dest.ctx)
+            else:
+                rendered = template.render(src, dest.loc, infra.items, **dest.ctx)
+
             outpath.write_text(rendered)
             print(outpath)
         print()
@@ -236,9 +240,9 @@ def recover(
 
 def _pull(new: Path) -> tuple[Path, str]:
     dest = str(new).removesuffix(".new") + ".old"
-    remote, loc = str(new.relative_to(paths.files)).removesuffix(".new").split("/", 1)
+    remote_dest, loc = str(new.relative_to(paths.files)).removesuffix(".new").split("/", 1)
     src = f"/{loc}"
-    name = remote.split("@", 1)[-1]
+    name = remote_dest.split("@", 1)[-1]
     host = infra.get_host(name)
     if not host:
         raise errors.InvalidDestinationError(dest=dest)
@@ -248,14 +252,14 @@ def _pull(new: Path) -> tuple[Path, str]:
 
 
 def _push(new: Path, remote_dest: str) -> tuple[Path, str]:
-    meta = Metadata.parse(new)
+    meta = template.Metadata.parse(new)
     dest = next(d for d in meta.dest if d.loc == remote_dest)
     chown = dest.chown or meta.chown
     chmod = dest.chmod or meta.chmod
 
-    remote, loc = remote_dest.split(":", 1)
+    remote_dest, loc = remote_dest.split(":", 1)
     dest = f"/{loc}"
-    name = remote.split("@", 1)[-1]
+    name = remote_dest.split("@", 1)[-1]
     host = infra.get_host(name)
     if not host:
         raise errors.InvalidDestinationError(dest)
@@ -299,35 +303,6 @@ def _print_diff(diff: list[str]):
             print(line)
 
 
-def _sudo_exec(
-    address: str,
-    command: list[str] | str,
-    options: list[str] | None = None,
-    shell: str | None = None,
-    stdout: int | IO[Any] = sp.PIPE,
-    stderr: int | IO[Any] = sp.PIPE,
-    stdin: int | IO[Any] = sp.PIPE,
-) -> sp.CompletedProcess[bytes]:
-    if isinstance(command, list):
-        command = sp.list2cmdline(command)
-    if shell:
-        command = sp.list2cmdline([shell, "-c", q(command)])
-    options = options or []
-    return sp.run(
-        [
-            "ssh",
-            "-o",
-            "StrictHostKeyChecking=no",
-            *options,
-            address,
-            command,
-        ],
-        stdout=stdout,
-        stderr=stderr,
-        stdin=stdin,
-    )
-
-
 def _sudo_pull_file(
     address: str, remote_src: str, local_dest: str, admin_ssh_key: str | None = None
 ):
@@ -335,7 +310,7 @@ def _sudo_pull_file(
     if admin_ssh_key:
         options = ["-i", admin_ssh_key]
     with Path(local_dest).open("w") as f:
-        _sudo_exec(
+        remote._sudo_exec(
             address,
             f"sudo test -f {q(remote_src)} && sudo cat -- {q(remote_src)} || true",
             options=options,
@@ -381,4 +356,4 @@ def _sudo_push_file(
         options = ["-i", admin_ssh_key]
 
     with Path(local_src).open("r") as f:
-        _sudo_exec(address, cmd, options=options, stdin=f).check_returncode()
+        remote._sudo_exec(address, cmd, options=options, stdin=f).check_returncode()
