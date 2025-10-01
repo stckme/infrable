@@ -308,7 +308,7 @@ Workflows let you combine tasks into a complete deployment process.
 **Example Workflow:**
 
 ```python
-from infrable import concurrentcontext, paths
+from infrable import files, concurrentcontext, paths, retryable
 
 deploy = typer.Typer(help="Deployment workflows.")
 
@@ -322,7 +322,7 @@ def deploy_dev_nginx():
     # Test the Nginx configuration and reload the service concurrently
     cmd = "sudo nginx -t && sudo systemctl reload nginx && echo success || echo failed"
     fn = lambda host: (host, host.remote().sudo(cmd))
-    with concurrentcontext(fn, files.affected_hosts()) as results:
+    with concurrentcontext(retryable(fn), files.affected_hosts()) as results:
         for host, result in results:
             print(f"{host}: {result}")
 ```

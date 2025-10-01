@@ -2,7 +2,7 @@ from infrable import Host, Service, infra
 
 
 def test_items():
-    assert len(infra.items) == 27
+    assert len(infra.items) == 28
     assert infra.items["dev"] == "dev"
 
 

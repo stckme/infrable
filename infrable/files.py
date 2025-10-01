@@ -153,9 +153,7 @@ def push(yes: bool = False, workers: int | None = None):
         if d := _diff(new=new, old=old):
             _print_diff(d)
             if not yes:
-                ans = typer.prompt(
-                    f"Push?", type=Choice(["y", "n", "all"]), default="y"
-                )
+                ans = typer.prompt("Push?", type=Choice(["y", "n", "all"]), default="y")
                 match ans.lower():
                     case "n":
                         new.unlink()
@@ -328,6 +326,7 @@ def _sudo_exec(
     )
 
 
+@utils.retryable
 def _sudo_pull_file(
     address: str, remote_src: str, local_dest: str, admin_ssh_key: str | None = None
 ):
@@ -345,6 +344,7 @@ def _sudo_pull_file(
         ).check_returncode()
 
 
+@utils.retryable
 def _sudo_push_file(
     address: str,
     local_src,
