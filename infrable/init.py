@@ -2,7 +2,7 @@ from pathlib import Path
 
 INFRA_PY = '''
 import typer
-from infrable import Host, Meta, Service, Switch, concurrentcontext, files, paths, readfile
+from infrable import Host, Meta, Service, Switch, concurrentcontext, files, paths, readfile, retryable
 from modules import mycloud
 
 # To quickly find the configuration file template on GitHub
@@ -77,7 +77,7 @@ def deploy_nginx():
     # Test the Nginx configuration and reload the service concurrently
     cmd = "sudo nginx -t && sudo systemctl reload nginx && echo success || echo failed"
     fn = lambda host: (host, host.remote().sudo(cmd))
-    with concurrentcontext(fn, files.affected_hosts()) as results:
+    with concurrentcontext(retryable(fn), files.affected_hosts()) as results:
         for host, result in results:
             print(f"{host}: {result}")
 # /Workflows -----------------------------------------------------------------------

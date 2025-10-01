@@ -3,6 +3,7 @@ from contextlib import contextmanager
 from typing import Callable, Generator, Iterable, Iterator, TypeVar
 
 from jinja2 import Template
+from tenacity import retry, stop_after_attempt, wait_random_exponential
 
 T1 = TypeVar("T1")
 T2 = TypeVar("T2")
@@ -17,6 +18,15 @@ def item_formatter(template: str) -> Template:
         keep_trailing_newline=True,
         finalize=lambda x: x or "",
     )
+
+
+def retryable(function: T1) -> T1:
+    retryobj = retry(
+        wait=wait_random_exponential(min=1, max=30),
+        stop=stop_after_attempt(10),
+        reraise=True,
+    )
+    return retryobj(function)  # type: ignore
 
 
 @contextmanager
