@@ -4,14 +4,10 @@ name = 'infrable'
 description = "Manage infrastructure as a Python dev"
 keywords = ['declarative', 'infrastructure', 'management']
 homepage = 'https://github.com/stckme/infrable'
-authors = [
-  {name = 'Arijit Basu', email = 'sayanarijit@gmail.com'}
-]
-maintainers = [
-  {name = 'Arijit Basu', email = 'sayanarijit@gmail.com'}
-]
+authors = [{ name = 'Arijit Basu', email = 'sayanarijit@gmail.com' }]
+maintainers = [{ name = 'Arijit Basu', email = 'sayanarijit@gmail.com' }]
 readme = 'README.md'
-license = {file = 'LICENSE'}
+license = { file = 'LICENSE' }
 requires-python = '>=3.12'
 dependencies = [
   'jinja2',
@@ -22,13 +18,21 @@ dependencies = [
   'tqdm',
   'python-box',
   "tenacity>=9.1.2",
+  "click>=8.4.1",
+]
+
+[dependency-groups]
+dev = [
+  "flake8>=7.3.0",
+  "pytest>=9.0.3",
+  "pytest-cov>=7.1.0",
+  "ruff>=0.15.17",
+  "tox>=4.55.1",
+  "twine>=6.2.0",
 ]
 
 [project.urls]
 Homepage = 'https://github.com/stckme/infrable'
-
-[project.optional-dependencies]
-devel = ['tox', 'pytest', 'pytest-cov', 'black', 'isort', 'build', 'twine', "flake8"]
 
 [project.scripts]
 infrable = 'infrable.cli.main:app'
@@ -41,4 +45,4 @@ build-backend = 'hatchling.build'
 path = 'infrable/__init__.py'
 
 [tool.pytest]
-addopts = '--cov --cov-report=html --cov-fail-under=100'
+addopts = ['--cov', '--cov-report=html', '--cov-fail-under=100']
