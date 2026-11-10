@@ -1,5 +1,6 @@
+from enum import Enum
+
 import typer
-from click import Choice
 
 from infrable import infra
 
@@ -7,19 +8,23 @@ app = typer.Typer(no_args_is_help=True)
 
 
 def _create_switch_command(switch):
+    env_options = sorted(switch.options)
+    EnvOptions = Enum("EnvOptions", {opt: opt for opt in env_options})
+
     def main(
-        value: str = typer.Argument(None, click_type=Choice(list(switch.options))),
+        value: EnvOptions = typer.Argument(None),
         options: bool = False,
     ):
         if options:
-            for opt in sorted(switch.options):
+            for opt in env_options:
                 print(opt)
             return
 
         if value is None:
-            print(switch())
+            if val := switch():
+                print(val)
         else:
-            switch.set(value)
+            switch.set(value.value)
 
     return main
 

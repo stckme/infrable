@@ -23,7 +23,7 @@ class Switch:
         if not self.path.exists():
             self.set(self.init)
 
-    def __call__(self, **cases: Any) -> Any | None:
+    def __call__(self, **cases: Any) -> str | None:
         """Get the current value of the switch. returns None if not defined."""
 
         if not cases:

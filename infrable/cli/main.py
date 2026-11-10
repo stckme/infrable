@@ -1,7 +1,7 @@
+from enum import Enum
 from typing import Optional
 
 import typer
-from click import Choice
 
 app = typer.Typer(no_args_is_help=True)
 
@@ -68,21 +68,25 @@ if IS_PROJECT_DIR:
         app.add_typer(ext, name=name.replace("_", "-"))
 
     if sw := infra.switches.get("env"):
+        env_options = sorted(sw.options)
+        EnvOptions = Enum("EnvOptions", {opt: opt for opt in env_options})
+
         # Alias for 'infrable switch env'
         def env(
-            value: str = typer.Argument(None, click_type=Choice(list(sw.options))),
+            value: EnvOptions | None = typer.Argument(None),
             options: bool = False,
         ):
             """Alias for `infrable switch env`."""
 
             if options:
-                for opt in sorted(sw.options):
+                for opt in env_options:
                     print(opt)
                 return
 
             if value is None:
-                print(sw())
+                if val := sw():
+                    print(val)
             else:
-                sw.set(value)
+                sw.set(value.value)
 
         app.command()(env)
