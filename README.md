@@ -295,6 +295,11 @@ infrable files affected-hosts | infrable remote - "sudo systemctl reload nginx"
 
 Tasks are groups of commands that simplify repeated actions. Define them in `infra.py`.
 
+> [!NOTE]
+>
+> - `Host.remote()` returns an [sh](https://sh.readthedocs.io) object, which lets you run shell commands on the remote host.
+> - [Typer](https://typer.tiangolo.com) is used to create CLI commands for tasks and workflows.
+
 **Example Task:**
 
 ```python
@@ -302,6 +307,7 @@ import typer
 
 # Add a task group for the dev_nginx service
 dev_nginx.typer = typer.Typer(help="Tasks for dev_nginx.")
+
 
 @dev_nginx.typer.command(name="reload")
 def reload_dev_nginx():
@@ -332,6 +338,7 @@ Workflows let you combine tasks into a complete deployment process.
 from infrable import files, concurrentcontext, paths, retryable
 
 deploy = typer.Typer(help="Deployment workflows.")
+
 
 @deploy.command(name="dev-nginx")
 def deploy_dev_nginx():
@@ -384,13 +391,17 @@ prod_host = Host(fqdn="prod.example.com", ip="127.0.0.3")
 managed_hosts = env(
     dev=[dev_host],
     beta=[beta_host],
-    prod=[prod_host]
+    prod=[prod_host],
 )
 
 # Define a service using a strict switch to choose the host
 web = Service(
-    host=env.strict(dev=dev_host, beta=beta_host, prod=prod_host),
-    port=8080
+    host=env.strict(
+        dev=dev_host,
+        beta=beta_host,
+        prod=prod_host,
+    ),
+    port=8080,
 )
 ```
 
@@ -439,7 +450,11 @@ infrable switches
 
 ## Managing Meta and Secrets
 
-Keep sensitive information (like secret keys) out of your version control by storing them in separate files.
+Keep sensitive information (like secret keys) out of your version control by storing them in separate files inside an git-ignored directory.
+
+```bash
+echo /secrets/ > .gitignore
+```
 
 **Example in `infra.py`:**
 
@@ -447,13 +462,20 @@ Keep sensitive information (like secret keys) out of your version control by sto
 from infrable import Meta, readfile
 
 # Read a secret key from a file
-common_secret_key = readfile("secrets/common/secret_key") # Tip: echo /secrets/ >> .gitignore
+common_secret_key = readfile("secrets/common/secret_key")
+
+# Or declare a group of secrets
+secrets = Meta(
+    secret_key=readfile("secrets/common/secret_key"),
+    db_password=readfile("secrets/common/db_password"),
+    api_token=readfile("secrets/common/api_token"),
+)
 
 # Attach secret metadata to a service
 web = Service(
     meta=Meta(secret_key=common_secret_key),
     host=env(dev=dev_host, beta=beta_host, prod=prod_host),
-    port=8080
+    port=8080,
 )
 ```
 
@@ -474,6 +496,7 @@ from dataclasses import dataclass
 from typer import Typer
 from infrable import Host, infra
 
+
 @dataclass
 class MyCloud:
     """Custom module for MyCloud operations."""
@@ -485,6 +508,7 @@ class MyCloud:
         ip = self.api.create_ubuntu_host(fqdn)
         return MyCloudUbuntuHost(fqdn=fqdn, ip=ip)
 
+
 @dataclass
 class MyCloudUbuntuHost(Host):
     """Customized Ubuntu host for MyCloud."""
@@ -495,7 +519,9 @@ class MyCloudUbuntuHost(Host):
     def install_mycloud_agent(self):
         raise NotImplementedError
 
+
 workflows = Typer()
+
 
 @workflows.command()
 def provision_ubuntu_host(fqdn: str, setup: bool = True):

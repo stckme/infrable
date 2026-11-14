@@ -1,6 +1,7 @@
 import os
 import sys
-from typing import Any, Iterable, Type
+from collections.abc import Iterable
+from typing import Any
 
 from typer import Typer
 
@@ -11,7 +12,7 @@ from infrable.service import Service
 from infrable.switch import Switch
 
 items: dict[str, Any] = {}
-item_types: dict[Type[Any], dict[str, Any]] = {}
+item_types: dict[type[Any], dict[str, Any]] = {}
 
 hosts: dict[str, Host] = {}
 services: dict[str, Service] = {}
@@ -36,8 +37,6 @@ if not items:
             # Skip private members
             continue
 
-        if name in items:
-            raise errors.DuplicateNameError(name)
         item = getattr(infra_module, name)
         items[name] = item
         itemtype = type(item)
@@ -76,7 +75,7 @@ if not items:
         elif isinstance(item, Meta):
             metas[name] = item
             if "typer" in item:
-                if isinstance(item, Typer):
+                if isinstance(item.typer, Typer):
                     typers[name] = item.typer
         elif isinstance(item, Typer):
             typers[name] = item

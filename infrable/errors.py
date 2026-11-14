@@ -4,7 +4,7 @@ class Error(Exception):
 
 class FQDNMustNotBeEmptyError(Error, ValueError):
     def __init__(self):
-        super().__init__(f"Error: FQDN must not be empty")
+        super().__init__("Error: FQDN must not be empty")
 
 
 class MissingMetadataError(Error, ValueError):
@@ -53,11 +53,6 @@ class SwitchError(Error, ValueError):
             f"{path}: switch value is set to {val},"
             f" but no case matched. Cases are: {_cases}"
         )
-
-
-class DuplicateNameError(Error, ValueError):
-    def __init__(self, name):
-        super().__init__(f"Duplicate name: {name}")
 
 
 class DuplicateIPError(Error, ValueError):

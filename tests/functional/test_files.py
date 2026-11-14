@@ -69,16 +69,18 @@ def test_files_revert():
     _gen_old_files(copy=False)
     infrable.files.backup()
 
-    news1, olds1 = [f.read_text() for f in paths.files.glob("**/*.new")], [
-        f.read_text() for f in paths.files.glob("**/*.old")
-    ]
+    news1, olds1 = (
+        [f.read_text() for f in paths.files.glob("**/*.new")],
+        [f.read_text() for f in paths.files.glob("**/*.old")],
+    )
 
     out = infrable.files.revert(_tty_out=False)
     assert out.strip().startswith(f"reverting from: {paths.backups}/")
 
-    news2, olds2 = [f.read_text() for f in paths.files.glob("**/*.new")], [
-        f.read_text() for f in paths.files.glob("**/*.old")
-    ]
+    news2, olds2 = (
+        [f.read_text() for f in paths.files.glob("**/*.new")],
+        [f.read_text() for f in paths.files.glob("**/*.old")],
+    )
 
     assert news1 == olds2
     assert olds1 == news2
@@ -120,11 +122,10 @@ def test_files_affect_hosts():
 def test_symlinks():
     os.symlink("../tests/data", paths.templates / "symlink")
     try:
-        with pytest.raises(Exception) as e:
+        with pytest.raises(Exception):
             infrable.files.gen()
-    except Exception as e:
+    finally:
         os.remove(paths.templates / "symlink")
-        raise e
 
 
 def test_hidden_files():
@@ -133,8 +134,7 @@ def test_hidden_files():
     hiddendir.joinpath(".hiddenfile").touch(exist_ok=True)
 
     try:
-        with pytest.raises(Exception) as e:
+        with pytest.raises(Exception):
             infrable.files.gen()
-    except Exception as e:
+    finally:
         shutil.rmtree(hiddendir, ignore_errors=True)
-        raise e

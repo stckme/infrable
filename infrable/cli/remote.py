@@ -14,7 +14,10 @@ def from_stdin(command: str, workers: Optional[int] = None):
 
     hosts = []
     for line in typer.get_text_stream("stdin").readlines():
-        host = line.split(maxsplit=1)[0].split("@", 1)[-1].strip()
+        parts = line.split(maxsplit=1)
+        if not parts:
+            continue  # blank line
+        host = parts[0].split("@", 1)[-1].strip()
         if not host:
             continue
         for host in infra.filtered_hosts(only=[host]):
@@ -83,7 +86,6 @@ def _create_host_command(host):
 
 
 for name, host in infra.hosts.items():
-
     help = f"Execute a script on {name}."
     cmd = _create_host_command(host)
     app.command(name=name, help=help)(cmd)

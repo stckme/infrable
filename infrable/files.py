@@ -150,7 +150,14 @@ def push(yes: bool = False, workers: int | None = None):
         old = _old_path(new)
         remote_dest = f"{remote}:/{loc}"
 
-        if d := _diff(new=new, old=old):
+        if not new.read_text().strip():
+            # Nothing to push. This happens when reverting to a backup of a
+            # file that didn't exist on the remote. An empty file has no
+            # metadata (chmod, chown...), and there's no way to un-create it.
+            print(f"skipping {remote_dest}: file is empty")
+            new.unlink()
+            old.unlink(missing_ok=True)
+        elif d := _diff(new=new, old=old):
             _print_diff(d)
             if not yes:
                 ans = typer.prompt("Push?", type=Literal["y", "n", "all"], default="y")
@@ -252,7 +259,7 @@ def _push(new: Path, remote_dest: str) -> tuple[Path, str]:
     chmod = dest.chmod or meta.chmod
 
     remote, loc = remote_dest.split(":", 1)
-    dest = f"/{loc}"
+    dest = f"/{loc.lstrip('/')}"
     name = remote.split("@", 1)[-1]
     host = infra.get_host(name)
     if not host:

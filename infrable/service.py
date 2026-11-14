@@ -20,4 +20,4 @@ class Service:
         return item_formatter(format).render(name=name, **asdict(self))
 
     def __str__(self) -> str:
-        return f'{self.host or ""}:{self.port or ""}'
+        return f"{self.host or ''}:{self.port or ''}"

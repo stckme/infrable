@@ -24,6 +24,7 @@ dev = [
   "flake8>=7.3.0",
   "pytest>=9.0.3",
   "pytest-cov>=7.1.0",
+  "pytest-socket>=0.8.1",
   "ruff>=0.15.17",
   "tox>=4.55.1",
   "twine>=6.2.0",
@@ -43,4 +44,14 @@ build-backend = 'hatchling.build'
 path = 'infrable/__init__.py'
 
 [tool.pytest]
-addopts = ['--cov', '--cov-report=html', '--cov-fail-under=100']
+addopts = [
+  '--disable-socket',
+  '--cov',
+  '--cov-report=html',
+  '--cov-fail-under=100',
+]
+
+[tool.coverage.run]
+source = ['infrable']
+parallel = true
+patch = ['subprocess']
