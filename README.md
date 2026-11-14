@@ -420,13 +420,15 @@ infrable switches
 
 Keep sensitive information (like secret keys) out of your version control by storing them in separate files.
 
+Or even better, use encrypted secrets with a secrets management tool such as [Cottage](https://github.com/sayanarijit/cottage).
+
 **Example in `infra.py`:**
 
 ```python
 from infrable import Meta, readfile
 
 # Read a secret key from a file
-common_secret_key = readfile("secrets/common/secret_key")
+common_secret_key = readfile("secrets/common/secret_key") # Tip: echo /secrets/ >> .gitignore
 
 # Attach secret metadata to a service
 web = Service(
@@ -434,12 +436,6 @@ web = Service(
     host=env(dev=dev_host, beta=beta_host, prod=prod_host),
     port=8080
 )
-```
-
-**Tip:** Add your secrets folder to `.gitignore`:
-
-```bash
-echo /secrets/ >> .gitignore
 ```
 
 ---
