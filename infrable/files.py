@@ -2,14 +2,14 @@ import random
 import shutil
 import subprocess as sp
 import time
+from collections.abc import Iterable, Iterator
 from datetime import datetime
 from difflib import unified_diff
 from pathlib import Path
 from shlex import quote as q
-from typing import IO, Any, Iterable, Iterator
+from typing import IO, Any, Literal
 
 import typer
-from click import Choice
 from tqdm import tqdm
 
 from infrable import errors, infra, paths, utils
@@ -153,7 +153,7 @@ def push(yes: bool = False, workers: int | None = None):
         if d := _diff(new=new, old=old):
             _print_diff(d)
             if not yes:
-                ans = typer.prompt("Push?", type=Choice(["y", "n", "all"]), default="y")
+                ans = typer.prompt("Push?", type=Literal["y", "n", "all"], default="y")
                 match ans.lower():
                     case "n":
                         new.unlink()

@@ -1,7 +1,7 @@
 [project]
 dynamic = ['version']
 name = 'infrable'
-description = "Manage infrastructure as a Python dev"
+description = "Manage Infrastructure and Configuration as a Python dev"
 keywords = ['declarative', 'infrastructure', 'management']
 homepage = 'https://github.com/stckme/infrable'
 authors = [{ name = 'Arijit Basu', email = 'sayanarijit@gmail.com' }]
@@ -10,14 +10,13 @@ readme = 'README.md'
 license = { file = 'LICENSE' }
 requires-python = '>=3.12'
 dependencies = [
-  'jinja2',
-  'sh',
-  'typer',
-  'pyyaml',
-  'ipython',
-  'tqdm',
-  'python-box',
-  "tenacity",
+  "jinja2~=3.1.0",
+  'sh~=2.4.0',
+  'typer~=0.29.0',
+  'pyyaml~=6.0.0',
+  'tqdm~=4.70.0',
+  'python-box~=8.0.0',
+  "tenacity~=9.2.0",
 ]
 
 [dependency-groups]

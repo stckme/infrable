@@ -1,21 +1,42 @@
 # Infrable
 
-Infrable is an Infrastructure as Code tool written in Python. It lets you manage hosts,
-services, configuration templates, deployments, and more—all from a single Python file
-(named `infra.py`).
+Infrable is an **_Infrastructure and Configuration as Code_** tool written in Python. It lets you manage hosts,
+services, configuration, deployments, and more — all from a single Python file named `infra.py`.
+
+> [!NOTE]
+> Infrable is not a replacement for Ansible, SaltStack, Terraform etc.
+> It's purpose is to help regular developers declare and manage infrastructure plus
+> configuration by writing custom Python code, Jinja2 templates and shell scripts,
+> without having to dig deeper into the complixities of more mature tools and ecosystem
+> of modules.
 
 [![PyPI version](https://img.shields.io/pypi/v/infrable.svg)](https://pypi.org/project/infrable)
+
+1. [Prerequisites](#prerequisites)
+2. [Installation and Project Setup](#installation-and-project-setup)
+3. [Defining Hosts and Services](#defining-hosts-and-services)
+4. [Working with Templates](#working-with-templates)
+5. [Deploying and Recovering Files](#deploying-and-recovering-files)
+   1. [Deploy Workflow](#deploy-workflow)
+   2. [Recover Workflow](#recover-workflow)
+6. [Running Remote Commands, Tasks, and Workflows](#running-remote-commands,-tasks,-and-workflows)
+   1. [Running Remote Commands](#running-remote-commands)
+   2. [Creating Tasks](#creating-tasks)
+   3. [Creating Workflows](#creating-workflows)
+7. [Using Environments and Switches](#using-environments-and-switches)
+8. [Managing Meta and Secrets](#managing-meta-and-secrets)
+9. [Extending Infrable with Custom Modules](#extending-infrable-with-custom-modules)
 
 ---
 
 ## Prerequisites
 
 - **Python 3.12 or newer**
-- Basic command-line knowledge
+- Basic Python, Jinja2 and Shell scripting knowledge
 
 ---
 
-## 1. Installation and Project Setup
+## Installation and Project Setup
 
 **Install Infrable:**
 
@@ -33,7 +54,7 @@ This command creates the basic project structure you’ll need.
 
 ---
 
-## 2. Defining Hosts and Services
+## Defining Hosts and Services
 
 In Infrable, you describe your infrastructure in a single file (named `infra.py`). Here
 you define all your hosts and the services running on them.
@@ -67,7 +88,7 @@ infrable services
 
 ---
 
-## 3. Working with Templates
+## Working with Templates
 
 Templates let you manage configuration files dynamically. You write these using Jinja2
 syntax and include metadata (like file paths and permissions) as header comments.
@@ -159,7 +180,7 @@ EOF
 
 ---
 
-## 4. Deploying and Recovering Files
+## Deploying and Recovering Files
 
 Before pushing configuration changes, Infrable compares your new files with those
 currently deployed. This helps you catch unintended changes. It also keeps a backup of
@@ -240,7 +261,7 @@ infrable.files.recover(path)
 
 ---
 
-## 5. Running Remote Commands, Tasks, and Workflows
+## Running Remote Commands, Tasks, and Workflows
 
 Infrable allows you to execute commands remotely on your defined hosts.
 
@@ -335,7 +356,7 @@ infrable deploy dev-nginx
 
 ---
 
-## 6. Using Environments and Switches
+## Using Environments and Switches
 
 Environments (like dev, beta, prod) let you use the same templates and tasks for different deployment targets.
 
@@ -416,11 +437,9 @@ infrable switches
 
 ---
 
-## 7. Managing Meta and Secrets
+## Managing Meta and Secrets
 
 Keep sensitive information (like secret keys) out of your version control by storing them in separate files.
-
-Or even better, use encrypted secrets with a secrets management tool such as [Cottage](https://github.com/sayanarijit/cottage).
 
 **Example in `infra.py`:**
 
@@ -438,9 +457,13 @@ web = Service(
 )
 ```
 
+> [!TIP]
+> Ideally, you should use encrypted secrets with a secrets management tool such as [Cottage](https://github.com/sayanarijit/cottage).
+> This way you can also track the secrets in your version control system without exposing them in plaintext.
+
 ---
 
-## 8. Extending Infrable with Custom Modules
+## Extending Infrable with Custom Modules
 
 You can add custom Python modules to extend Infrable’s functionality.
 
@@ -504,20 +527,3 @@ cloud.typer = mycloud.workflows
 ```bash
 infrable cloud --help
 ```
-
----
-
-## Conclusion
-
-You’ve now learned how to:
-
-- Install and initialize an Infrable project
-- Define hosts and services in a single file
-- Use templates to manage configuration files
-- Deploy changes safely and recover configurations when needed
-- Run remote commands, tasks, and workflows
-- Manage environments for different deployment targets
-- Handle secrets securely
-- Extend Infrable with custom Python modules
-
-With these building blocks, even new developers can start managing infrastructure as code using Infrable. Happy coding!
