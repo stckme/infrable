@@ -132,7 +132,7 @@ server {
 }
 ```
 
-> **Notes:**
+> [!NOTE]
 >
 > - The `template_prefix` and `*_nginx` variables are defined in `infra.py`.
 > - The `_template.src` variable is automatically available in all templates.
