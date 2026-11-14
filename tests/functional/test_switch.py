@@ -1,7 +1,5 @@
 from sh import infrable
 
-from infrable import __version__
-
 
 def test_switch():
     infrable.switch.env.beta()

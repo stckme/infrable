@@ -9,8 +9,6 @@ import subprocess as sp
 import sys
 import textwrap
 
-import pytest
-
 from infrable import errors
 
 PROBE = """

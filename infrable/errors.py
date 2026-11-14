@@ -62,4 +62,31 @@ class DuplicateIPError(Error, ValueError):
 
 class DuplicateFQDNError(Error, ValueError):
     def __init__(self, fqdn):
-        super().__init__(f"Duplicate IP: {fqdn}")
+        super().__init__(f"Duplicate FQDN: {fqdn}")
+
+
+class InvalidHostError(Error, ValueError):
+    def __init__(self, field, value):
+        super().__init__(f"invalid host {field}: {value!r}")
+
+
+class InvalidMetadataError(Error, ValueError):
+    def __init__(self, src, problem):
+        super().__init__(f"invalid metadata in template {src}: {problem}")
+
+
+class NoBackupsError(Error, FileNotFoundError):
+    def __init__(self, path):
+        super().__init__(f"no backups found in: {path}")
+
+
+class InvalidHostKeyCheckingError(Error, ValueError):
+    def __init__(self, value, options):
+        options = ", ".join(sorted(options))
+        super().__init__(
+            f"invalid value {value!r} for {HOST_KEY_CHECKING_ENV}."
+            f" Options are: {options}"
+        )
+
+
+HOST_KEY_CHECKING_ENV = "INFRABLE_STRICT_HOST_KEY_CHECKING"

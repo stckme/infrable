@@ -467,13 +467,13 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "jinja2", specifier = "~=3.1.0" },
-    { name = "python-box", specifier = "~=8.0.0" },
-    { name = "pyyaml", specifier = "~=6.0.0" },
-    { name = "sh", specifier = "~=2.4.0" },
-    { name = "tenacity", specifier = "~=9.2.0" },
-    { name = "tqdm", specifier = "~=4.70.0" },
-    { name = "typer", specifier = "~=0.29.0" },
+    { name = "jinja2", specifier = ">=3.1,<4" },
+    { name = "python-box", specifier = ">=8,<9" },
+    { name = "pyyaml", specifier = ">=6,<7" },
+    { name = "sh", specifier = ">=2.4,<3" },
+    { name = "tenacity", specifier = ">=9,<10" },
+    { name = "tqdm", specifier = ">=4.66,<5" },
+    { name = "typer", specifier = ">=0.29,<1" },
 ]
 
 [package.metadata.requires-dev]

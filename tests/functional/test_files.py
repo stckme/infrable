@@ -3,9 +3,9 @@ import shutil
 from pathlib import Path
 
 import pytest
-from sh import infrable
+from sh import ErrorReturnCode, infrable
 
-from infrable import __version__, paths
+from infrable import paths
 
 data = Path("tests/data")
 
@@ -122,7 +122,7 @@ def test_files_affect_hosts():
 def test_symlinks():
     os.symlink("../tests/data", paths.templates / "symlink")
     try:
-        with pytest.raises(Exception):
+        with pytest.raises(ErrorReturnCode):
             infrable.files.gen()
     finally:
         os.remove(paths.templates / "symlink")
@@ -134,7 +134,7 @@ def test_hidden_files():
     hiddendir.joinpath(".hiddenfile").touch(exist_ok=True)
 
     try:
-        with pytest.raises(Exception):
+        with pytest.raises(ErrorReturnCode):
             infrable.files.gen()
     finally:
         shutil.rmtree(hiddendir, ignore_errors=True)

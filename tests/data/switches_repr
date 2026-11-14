@@ -1,1 +1,1 @@
-env = Switch(options={'beta', 'dev', 'prod'}, init='dev', typer=None, meta=Box({}))
+env = Switch(options={'prod', 'beta', 'dev'}, init='dev', typer=None)

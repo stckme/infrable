@@ -1,13 +1,13 @@
 # Infrable
 
-Infrable is an **_Infrastructure and Configuration as Code_** tool written in Python. It lets you manage hosts,
-services, configuration, deployments, and more — all from a single Python file named `infra.py`.
+Infrable is a simple **_Infrastructure and Configuration as Code_** tool written in Python.
+It lets you manage hosts, services, configuration, deployments, and more — all from a single Python file named `infra.py`.
 
 > [!NOTE]
 > Infrable is not a replacement for Ansible, SaltStack, Terraform etc.
-> It's purpose is to help regular developers declare and manage infrastructure plus
+> Its purpose is to help regular developers declare and manage infrastructure plus
 > configuration by writing custom Python code, Jinja2 templates and shell scripts,
-> without having to dig deeper into the complixities of more mature tools and ecosystem
+> without having to dig deeper into the complexities of more mature tools and ecosystem
 > of modules.
 
 [![PyPI version](https://img.shields.io/pypi/v/infrable.svg)](https://pypi.org/project/infrable)
@@ -19,19 +19,22 @@ services, configuration, deployments, and more — all from a single Python file
 5. [Deploying and Recovering Files](#deploying-and-recovering-files)
    1. [Deploy Workflow](#deploy-workflow)
    2. [Recover Workflow](#recover-workflow)
-6. [Running Remote Commands, Tasks, and Workflows](#running-remote-commands,-tasks,-and-workflows)
+6. [Running Remote Commands, Tasks, and Workflows](#running-remote-commands-tasks-and-workflows)
    1. [Running Remote Commands](#running-remote-commands)
    2. [Creating Tasks](#creating-tasks)
    3. [Creating Workflows](#creating-workflows)
 7. [Using Environments and Switches](#using-environments-and-switches)
 8. [Managing Meta and Secrets](#managing-meta-and-secrets)
 9. [Extending Infrable with Custom Modules](#extending-infrable-with-custom-modules)
+10. [Security Model and Limitations](#security-model-and-limitations)
 
 ---
 
 ## Prerequisites
 
-- **Python 3.12 or newer**
+- **Python 3.12 or newer**, on Linux or macOS (Windows is not supported)
+- The `ssh` client, and key-based access to your hosts
+- Passwordless `sudo` for the admin user on the managed hosts
 - Basic Python, Jinja2 and Shell scripting knowledge
 
 ---
@@ -165,18 +168,23 @@ if [ ! -d /var/www/html ]; then
     mkdir -p /var/www/html
 fi
 
+chown root:www-data /var/www/html
+
 cat > /var/www/html/robots.txt <<EOF
 User-agent: *
 Disallow: {{ disallow }}
 EOF
+
+chown root:www-data /var/www/html/robots.txt
+
 ```
 
-> **Notes:**
+> [!NOTE]
 >
-> - The `execute: true` metadata flag tells Infrable to execute the script on the remote
->   host.
-> - The value of `disallow` is set based on the context variables declared in the
->   template header.
+> - The `execute: true` metadata flag tells Infrable to execute the script on the remote host.
+> - The value of `disallow` is set based on the context variables declared in the template header.
+> - The script runs as root on every deployment where the file changed.
+> - It might re-run for an other reasons, so it should be idempotent and safe to run multiple times.
 
 ---
 
@@ -453,8 +461,18 @@ infrable switches
 Keep sensitive information (like secret keys) out of your version control by storing them in separate files inside an git-ignored directory.
 
 ```bash
-echo /secrets/ > .gitignore
+printf '%s\n' /secrets/ /.infrable/ >> .gitignore
 ```
+
+> [!IMPORTANT]
+> `/.infrable/` holds the rendered files, the files pulled from your servers and the
+> backups, all in plaintext, so it may contain secrets too. `infrable init` adds both
+> entries to `.gitignore` for you. Infrable creates `.infrable/` and the files created by
+> `readfile` readable by you only.
+
+> [!WARNING]
+> Values in `Meta` are kept out of `repr()`, but anything you print or render into a
+> template is, of course, in plaintext.
 
 **Example in `infra.py`:**
 
@@ -553,3 +571,35 @@ cloud.typer = mycloud.workflows
 ```bash
 infrable cloud --help
 ```
+
+---
+
+## Security Model and Limitations
+
+Infrable pushes files to your servers and runs commands there as root, so read this before
+using it on anything important.
+
+- **`infra.py` is code, and it is executed.** Every `infrable` command imports `infra.py`
+  (and the `modules/` it uses) from the current directory. Only run Infrable in
+  directories you trust, just like you would with a `Makefile` or `fabfile.py`.
+  Templates are code too: they're rendered with full access to your `infra.py`, and a
+  template with `execute: true` is run as root on the host.
+- **SSH host keys.** Infrable uses `StrictHostKeyChecking=accept-new`: a host's key is
+  trusted on first use, and a changed key is refused. To verify keys yourself beforehand,
+  set `INFRABLE_STRICT_HOST_KEY_CHECKING=yes` (other accepted values are `ask`, `no`, `off`
+  and `accept-new`). Don't use `no` or `off` on untrusted networks.
+- **Remote writes.** Files are streamed over SSH into a private temporary file created with
+  `mktemp`, given their `chown`/`chmod` (`644` unless you set one), and then moved into
+  place with `sudo`. Set `chmod` explicitly for anything sensitive.
+- **Retries.** Only SSH connection failures are retried (up to 5 attempts). A command or
+  script that fails on the host is not run again. The `retryable` helper you can use in
+  your own workflows retries on any error, so only wrap idempotent code with it.
+- **Local state.** `.infrable/` and the files created by `readfile` are readable by the
+  owner only, but they're plaintext. Keep them out of version control and out of backups
+  that you don't trust.
+- **Format strings.** The `--format` option renders a Jinja template in a sandbox, but you
+  should still treat it as input from the person running the command.
+- **Other limitations.** IPv6 addresses can't be used as the host part of a template's
+  `dest` (`host:/path`), as the first `:` is the separator. Use an FQDN or a host name.
+
+Found a vulnerability? See [SECURITY.md](SECURITY.md).

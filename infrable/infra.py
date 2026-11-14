@@ -47,7 +47,7 @@ if not items:
         bases = list(itemtype.__bases__)
         while bases:
             base = bases.pop()
-            if base != object:
+            if base is not object:
                 if base not in item_types:
                     item_types[base] = {}
                 item_types[base][name] = item

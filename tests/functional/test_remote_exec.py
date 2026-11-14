@@ -6,7 +6,7 @@ from sh import infrable
 
 from infrable import paths
 
-SSH_OPTS = "-o StrictHostKeyChecking=no"
+SSH_OPTS = "-o StrictHostKeyChecking=accept-new"
 
 
 def _targets(fake_ssh):

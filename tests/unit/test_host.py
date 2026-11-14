@@ -1,6 +1,8 @@
 from dataclasses import replace
 
-from infrable import Host, Meta, Service
+import pytest
+
+from infrable import Host, Meta, Service, errors
 
 
 def test_host_str_prefers_fqdn():
@@ -10,7 +12,7 @@ def test_host_str_prefers_fqdn():
 
 def test_host_remote_command():
     cmd = Host(ip="1.1.1.1").remote()
-    assert str(cmd).endswith("ssh root@1.1.1.1 -o StrictHostKeyChecking=no")
+    assert str(cmd).endswith("ssh root@1.1.1.1 -o StrictHostKeyChecking=accept-new")
 
 
 def test_host_remote_login_override():
@@ -21,7 +23,7 @@ def test_host_remote_login_override():
 
 def test_host_remote_ssh_key():
     cmd = Host(ip="1.1.1.1", admin_ssh_key="/keys/id").remote()
-    assert str(cmd).endswith("-o StrictHostKeyChecking=no -i /keys/id")
+    assert str(cmd).endswith("-o StrictHostKeyChecking=accept-new -i /keys/id")
 
 
 def test_host_format():
@@ -64,3 +66,36 @@ def test_service_format():
     svc = Service(host=host, port=80)
     assert svc.format("web", "{name},{host.ip},{port}") == "web,1.1.1.1,80"
     assert Service().format("web", "{name}:{port}") == "web:"
+
+
+def test_host_remote_honours_host_key_checking_override(monkeypatch):
+    monkeypatch.setenv("INFRABLE_STRICT_HOST_KEY_CHECKING", "yes")
+    assert str(Host(ip="1.1.1.1").remote()).endswith("-o StrictHostKeyChecking=yes")
+
+
+@pytest.mark.parametrize("ip", ["", "1.1.1.1 -oProxyCommand=x", "a\nb"])
+def test_host_rejects_invalid_ip(ip):
+    with pytest.raises(errors.InvalidHostError):
+        Host(ip=ip)
+
+
+@pytest.mark.parametrize("admin", ["", "-oProxyCommand=x", "a b"])
+def test_host_rejects_invalid_admin(admin):
+    with pytest.raises(errors.InvalidHostError):
+        Host(ip="1.1.1.1", admin=admin)
+
+
+def test_host_remote_rejects_invalid_login():
+    with pytest.raises(errors.InvalidHostError):
+        Host(ip="1.1.1.1").remote("-oProxyCommand=x")
+
+
+def test_meta_is_kept_out_of_repr():
+    secret = Meta(secret_key="hunter2")
+    host = Host(ip="1.1.1.1", meta=secret)
+    svc = Service(host=host, meta=secret)
+
+    assert "hunter2" not in repr(host)
+    assert "hunter2" not in repr(svc)
+    # ...but it's still there
+    assert svc.meta.secret_key == "hunter2"

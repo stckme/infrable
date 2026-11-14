@@ -2,8 +2,6 @@ from pathlib import Path
 
 from sh import infrable
 
-from infrable import __version__
-
 data = Path("tests/data")
 
 

@@ -1,5 +1,6 @@
 import json
 import os
+import shlex
 import shutil
 import sys
 from pathlib import Path
@@ -27,7 +28,8 @@ with open(os.environ["FAKE_SSH_LOG"], "a") as f:
     f.write(json.dumps({{"argv": argv, "stdin": stdin}}) + "\\n")
 
 if os.environ.get("FAKE_SSH_FAIL"):
-    sys.exit(255)
+    sys.stderr.write(os.environ["FAKE_SSH_FAIL"])
+    sys.exit(int(os.environ.get("FAKE_SSH_EXIT", "255")))
 
 if "sudo cat --" in command:
     src = shlex.split(command.split("sudo cat --", 1)[1].split("||")[0])[0]
@@ -56,6 +58,12 @@ class FakeSSH:
     def commands(self) -> list[str]:
         return [c["argv"][-1] for c in self.calls()]
 
+    @staticmethod
+    def script(call: dict) -> str:
+        """The shell script of a push, which is sent as `sh -c '<script>'`."""
+
+        return shlex.split(call["argv"][-1])[2]
+
     def put(self, path: str, content: str):
         dest = self.remote / path.lstrip("/")
         dest.parent.mkdir(parents=True, exist_ok=True)
@@ -77,4 +85,6 @@ def fake_ssh(tmp_path, monkeypatch) -> FakeSSH:
     monkeypatch.setenv("FAKE_SSH_LOG", str(fake.log))
     monkeypatch.setenv("FAKE_SSH_REMOTE", str(fake.remote))
     monkeypatch.delenv("FAKE_SSH_FAIL", raising=False)
+    monkeypatch.delenv("FAKE_SSH_EXIT", raising=False)
+    monkeypatch.delenv("INFRABLE_STRICT_HOST_KEY_CHECKING", raising=False)
     return fake

@@ -110,3 +110,9 @@ def test_format():
     sw = Switch(OPTIONS, init="dev")
 
     assert sw.format("env", "{name},{init}") == "env,dev"
+
+
+def test_state_directory_is_private():
+    Switch(OPTIONS, init="dev")
+
+    assert Path(".infrable").stat().st_mode & 0o777 == 0o700

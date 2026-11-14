@@ -16,7 +16,8 @@ class Switch:
     init: str
 
     typer: Typer | None = None
-    meta: Meta = field(default_factory=Meta)
+    # Often holds secrets, so keep it out of repr()
+    meta: Meta = field(default_factory=Meta, repr=False)
 
     def __post_init__(self):
         self.path = paths.switches / "-".join(sorted(self.options))
@@ -50,6 +51,7 @@ class Switch:
 
     def set(self, value: str):
         if value in self.options:
+            paths.ensure_var()
             self.path.parent.mkdir(parents=True, exist_ok=True)
             self.path.write_text(value)
             return

@@ -48,4 +48,4 @@ def test_get_host():
     assert infra.get_host("dev_host").fqdn == "dev.example.com"
     assert infra.get_host("dev.example.com").fqdn == "dev.example.com"
     assert infra.get_host("127.0.0.1").fqdn == "dev.example.com"
-    assert infra.get_host("foo") == None
+    assert infra.get_host("foo") is None

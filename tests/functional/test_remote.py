@@ -1,7 +1,5 @@
 from sh import infrable
 
-from infrable import __version__
-
 
 def test_remote():
     out = infrable.remote("--help")

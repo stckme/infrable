@@ -43,8 +43,29 @@ from infrable import errors
             ValueError,
             "p: switch value is set to x, but no case matched. Cases are: a, b",
         ),
+        (
+            errors.InvalidHostError("ip", "a b"),
+            ValueError,
+            "invalid host ip: 'a b'",
+        ),
+        (
+            errors.InvalidMetadataError("a.j2", "missing src"),
+            ValueError,
+            "invalid metadata in template a.j2: missing src",
+        ),
+        (
+            errors.NoBackupsError(".infrable/backups"),
+            FileNotFoundError,
+            "no backups found in: .infrable/backups",
+        ),
+        (
+            errors.InvalidHostKeyCheckingError("maybe", {"yes", "no"}),
+            ValueError,
+            "invalid value 'maybe' for INFRABLE_STRICT_HOST_KEY_CHECKING."
+            " Options are: no, yes",
+        ),
         (errors.DuplicateIPError("1.1.1.1"), ValueError, "Duplicate IP: 1.1.1.1"),
-        (errors.DuplicateFQDNError("a.b"), ValueError, "Duplicate IP: a.b"),
+        (errors.DuplicateFQDNError("a.b"), ValueError, "Duplicate FQDN: a.b"),
     ],
 )
 def test_error_messages(error, base, message):

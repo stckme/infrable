@@ -13,7 +13,8 @@ class Service:
 
     host: Host | None = None
     port: int | None = None
-    meta: Meta = field(default_factory=Meta)
+    # Often holds secrets, so keep it out of repr()
+    meta: Meta = field(default_factory=Meta, repr=False)
     typer: Typer | None = None
 
     def format(self, name: str, format: str) -> str:

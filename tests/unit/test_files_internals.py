@@ -145,7 +145,7 @@ def test_push_dest_chmod_chown_override_template(fake_ssh):
 
     files._push(new, "dev_host:/etc/a")
 
-    cmd = fake_ssh.commands()[0]
+    cmd = fake_ssh.script(fake_ssh.calls()[0])
     assert "sudo chmod -- 600" in cmd and "sudo chown -- a:b" in cmd
 
 
@@ -157,7 +157,7 @@ def test_push_destination_has_a_single_leading_slash(fake_ssh):
 
     files._push(new, "dev_host:/etc/a")
 
-    cmd = fake_ssh.commands()[0]
+    cmd = fake_ssh.script(fake_ssh.calls()[0])
     assert "sudo mkdir -p -- /etc" in cmd
     assert cmd.endswith(" /etc/a && sudo chmod u+rx -- /etc/a && sudo -- /etc/a")
     assert "//" not in cmd
@@ -177,16 +177,16 @@ def test_push_destination_without_leading_slash_is_normalised(fake_ssh):
 def test_sudo_exec_joins_list_commands(fake_ssh):
     files._sudo_exec("a@b", ["echo", "hello world"])
 
-    assert fake_ssh.commands() == ['echo "hello world"']
+    assert fake_ssh.commands() == ["echo 'hello world'"]
 
 
 def test_sudo_exec_with_shell_and_options(fake_ssh):
     files._sudo_exec("a@b", "echo hi; echo there", shell="bash", options=["-p", "22"])
 
     call = fake_ssh.calls()[0]["argv"]
-    assert call[:4] == ["-o", "StrictHostKeyChecking=no", "-p", "22"]
+    assert call[:4] == ["-o", "StrictHostKeyChecking=accept-new", "-p", "22"]
     assert call[-2] == "a@b"
-    assert call[-1] == "bash -c \"'echo hi; echo there'\""
+    assert call[-1] == "bash -c 'echo hi; echo there'"
 
 
 def test_sudo_pull_file_uses_ssh_key(fake_ssh):
@@ -213,7 +213,7 @@ def test_sudo_pull_file_retries_then_fails(fake_ssh, monkeypatch):
     with pytest.raises(sp.CalledProcessError):
         files._sudo_pull_file("a@b", "/etc/a", "local.old")
 
-    assert len(fake_ssh.calls()) == 10
+    assert len(fake_ssh.calls()) == 5
 
 
 def test_sudo_push_file_retries_then_fails(fake_ssh, monkeypatch):
@@ -224,7 +224,7 @@ def test_sudo_push_file_retries_then_fails(fake_ssh, monkeypatch):
     with pytest.raises(sp.CalledProcessError):
         files._sudo_push_file("a@b", src, "/etc/a")
 
-    assert len(fake_ssh.calls()) == 10
+    assert len(fake_ssh.calls()) == 5
 
 
 def test_sudo_push_file_command(fake_ssh):
@@ -245,14 +245,15 @@ def test_sudo_push_file_command(fake_ssh):
     assert call["stdin"] == "content"
     assert "-i" in call["argv"]
     # permissions are set on the temp file, before it's moved into place
-    steps = cmd.split(" && ")
-    assert steps[0].startswith("sudo tee -- /tmp/infrable-push-")
-    assert steps[1].startswith("sudo chmod -- 600 /tmp/infrable-push-")
-    assert steps[2].startswith("sudo chown -- u:g /tmp/infrable-push-")
-    assert steps[3] == "sudo mkdir -p -- /etc/dir"
-    assert steps[4].startswith("sudo mv -f -- /tmp/infrable-push-")
-    assert steps[4].endswith(" /etc/dir/a")
-    assert steps[5] == "sudo -- /etc/dir/a"
+    steps = fake_ssh.script(call).split(" && ")
+    assert steps[0] == "tmp=$(sudo mktemp /tmp/infrable-push.XXXXXXXXXX)"
+    assert steps[1].startswith("trap ")
+    assert steps[2] == 'sudo tee -- "$tmp" >/dev/null'
+    assert steps[3] == 'sudo chown -- u:g "$tmp"'
+    assert steps[4] == 'sudo chmod -- 600 "$tmp"'
+    assert steps[5] == "sudo mkdir -p -- /etc/dir"
+    assert steps[6] == 'sudo mv -f -- "$tmp" /etc/dir/a'
+    assert steps[7] == "sudo -- /etc/dir/a"
     # chmod was given, so no implicit chmod u+rx
     assert "u+rx" not in cmd
 
@@ -270,7 +271,7 @@ def test_sudo_push_file_does_not_execute_by_default(fake_ssh):
 
     files._sudo_push_file("a@b", src, "/etc/a")
 
-    cmd = fake_ssh.commands()[0]
+    cmd = fake_ssh.script(fake_ssh.calls()[0])
     assert "u+rx" not in cmd
     assert not cmd.endswith("sudo -- /etc/a")
 
@@ -308,3 +309,74 @@ def test_print_diff_prints_all_line_kinds(capsys):
     out = capsys.readouterr().out
     for text in ["--- a", "+++ b", "@@ -1 +1 @@", "-old", "+new", " same"]:
         assert text in out
+
+
+def test_gen_state_directory_is_private():
+    src = _write("t/x.j2", "# ---\n# src: s\n# dest: dev_host:/etc/a\n# ---\nbody")
+
+    files.gen(src)
+
+    assert paths.var.stat().st_mode & 0o777 == 0o700
+
+
+@pytest.mark.parametrize("dest", ["dev_host:/../../../escape", "../x:/etc/a"])
+def test_gen_refuses_to_write_outside_the_files_dir(dest):
+    src = _write("t/x.j2", f"# ---\n# src: s\n# dest: {dest}\n# ---\nbody")
+
+    with pytest.raises(errors.InvalidDestinationError):
+        files.gen(src)
+
+    assert not Path("escape.new").exists()
+
+
+def test_revert_without_backups_is_an_error():
+    with pytest.raises(errors.NoBackupsError, match="backups"):
+        files.revert()
+
+
+def test_sudo_pull_file_missing_remote_file_is_empty(fake_ssh):
+    files._sudo_pull_file("a@b", "/etc/nope", "local.old")
+
+    assert Path("local.old").read_text() == ""
+
+
+def test_sudo_pull_file_failure_is_reported_not_retried(fake_ssh, monkeypatch, capfd):
+    # Anything but an ssh connection failure means the remote command failed
+    monkeypatch.setenv("FAKE_SSH_FAIL", "sudo: permission denied")
+    monkeypatch.setenv("FAKE_SSH_EXIT", "1")
+
+    with pytest.raises(sp.CalledProcessError):
+        files._sudo_pull_file("a@b", "/etc/a", "local.old")
+
+    assert len(fake_ssh.calls()) == 1
+    assert "sudo: permission denied" in capfd.readouterr().err
+
+
+def test_sudo_push_file_does_not_rerun_failed_scripts(fake_ssh, monkeypatch):
+    monkeypatch.setenv("FAKE_SSH_FAIL", "script failed")
+    monkeypatch.setenv("FAKE_SSH_EXIT", "3")
+    src = _write("src", "content")
+
+    with pytest.raises(sp.CalledProcessError):
+        files._sudo_push_file("a@b", src, "/etc/a", execute=True)
+
+    assert len(fake_ssh.calls()) == 1
+
+
+def test_sudo_push_file_defaults_to_world_readable(fake_ssh):
+    # The temp file is private (0600), so the old default has to be explicit
+    src = _write("src", "content")
+
+    files._sudo_push_file("a@b", src, "/etc/a")
+
+    assert 'sudo chmod -- 644 "$tmp"' in fake_ssh.script(fake_ssh.calls()[0])
+
+
+def test_sudo_push_file_quotes_destination(fake_ssh):
+    src = _write("src", "content")
+
+    files._sudo_push_file("a@b", src, "/etc/my dir/a; rm -rf x", chown="a:b; id")
+
+    script = fake_ssh.script(fake_ssh.calls()[0])
+    assert "'/etc/my dir/a; rm -rf x'" in script
+    assert "'a:b; id'" in script

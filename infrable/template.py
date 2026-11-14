@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from pathlib import Path
 from typing import Any, Optional
 
@@ -29,6 +29,10 @@ class Dest:
         if isinstance(data, str):
             return cls(loc=data)
 
+        if unknown := set(data) - {f.name for f in fields(cls)}:
+            raise errors.InvalidMetadataError(data, f"unknown keys {sorted(unknown)}")
+        if "loc" not in data:
+            raise errors.InvalidMetadataError(data, "missing loc")
         return cls(**data)
 
 
@@ -73,7 +77,16 @@ class Metadata:
         if not yamllines:
             raise errors.MissingMetadataError(src=path)
 
-        meta: dict = yaml.safe_load("\n".join(yamllines))
+        meta = yaml.safe_load("\n".join(yamllines))
+        if not isinstance(meta, dict):
+            raise errors.MissingMetadataError(src=path)
+
+        allowed = {f.name for f in fields(cls) if not f.name.startswith("_")}
+        if unknown := set(meta) - allowed:
+            raise errors.InvalidMetadataError(path, f"unknown keys {sorted(unknown)}")
+        if "src" not in meta:
+            raise errors.InvalidMetadataError(path, "missing src")
+
         meta_dest: str | dict | list[str | dict] | None = meta.pop("dest", None)
 
         dest = []
@@ -103,7 +116,7 @@ class Metadata:
             dict_["execute"] = self.execute
 
         header = yaml.safe_dump(dict_, default_flow_style=False)
-        header = "\n".join(f"# {l}" for l in header.splitlines())
+        header = "\n".join(f"# {line}" for line in header.splitlines())
         return header
 
 

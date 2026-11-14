@@ -222,7 +222,27 @@ FILES = {
 }
 
 
+# Rendered files and backups (.infrable/) may contain secrets, so may secrets/.
+GITIGNORE_ENTRIES = [".infrable/", "secrets/", "__pycache__/"]
+
+
+def _ensure_gitignore():
+    path = Path(".gitignore")
+    text = path.read_text() if path.exists() else ""
+    lines = text.splitlines()
+    present = {line.strip().strip("/") for line in lines}
+    missing = [e for e in GITIGNORE_ENTRIES if e.strip("/") not in present]
+    if not missing:
+        return
+    with path.open("a") as f:
+        if text and not text.endswith("\n"):
+            f.write("\n")
+        f.write("\n".join(missing) + "\n")
+    print(f"Updated {path}.")
+
+
 def init():
+    _ensure_gitignore()
     for filename, content in FILES.items():
         path = Path(filename)
         if path.exists() and path.read_text().strip():

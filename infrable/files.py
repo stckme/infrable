@@ -1,6 +1,7 @@
-import random
+import shlex
 import shutil
 import subprocess as sp
+import sys
 import time
 from collections.abc import Iterable, Iterator
 from datetime import datetime
@@ -53,6 +54,7 @@ def gen(path: Path | str | None = None, only: Iterable[str] | None = None):
 
     if paths.files.exists():
         shutil.rmtree(str(paths.files))
+    paths.ensure_var()
 
     path = Path(path or paths.templates)
 
@@ -88,6 +90,8 @@ def gen(path: Path | str | None = None, only: Iterable[str] | None = None):
                 print(f"skipping {dest.loc}")
                 continue
             outpath = paths.files / remote / (loc.removeprefix("/") + ".new")
+            if not outpath.resolve().is_relative_to(paths.files.resolve()):
+                raise errors.InvalidDestinationError(dest.loc)
             outpath.parent.mkdir(exist_ok=True, parents=True)
             rendered = render(src, dest.loc, infra.items, **dest.ctx)
             outpath.write_text(rendered)
@@ -118,6 +122,7 @@ def backup():
     if not paths.files.exists():
         return
 
+    paths.ensure_var()
     dirname = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
     backupdir = paths.backups / dirname
     while backupdir.exists():
@@ -187,7 +192,10 @@ def revert(path: Path | str | None = None):
     """Revert files from backup."""
 
     if path is None:
-        path = max(paths.backups.glob("*"))
+        backups = sorted(paths.backups.glob("*"))
+        if not backups:
+            raise errors.NoBackupsError(paths.backups)
+        path = backups[-1]
 
     print(f"reverting from: {path}")
 
@@ -313,16 +321,16 @@ def _sudo_exec(
     stderr: int | IO[Any] = sp.PIPE,
     stdin: int | IO[Any] = sp.PIPE,
 ) -> sp.CompletedProcess[bytes]:
+    # The remote end is a POSIX shell, so quote for it (not for Windows).
     if isinstance(command, list):
-        command = sp.list2cmdline(command)
+        command = shlex.join(command)
     if shell:
-        command = sp.list2cmdline([shell, "-c", q(command)])
+        command = shlex.join([shell, "-c", command])
     options = options or []
     return sp.run(
         [
             "ssh",
-            "-o",
-            "StrictHostKeyChecking=no",
+            *utils.ssh_host_key_options(),
             *options,
             address,
             command,
@@ -333,7 +341,18 @@ def _sudo_exec(
     )
 
 
-@utils.retryable
+def _check(result: sp.CompletedProcess[bytes]) -> None:
+    """Raise if the command failed, showing why (e.g. a changed host key)."""
+
+    try:
+        result.check_returncode()
+    except sp.CalledProcessError:
+        if result.stderr:
+            sys.stderr.write(result.stderr.decode(errors="replace"))
+        raise
+
+
+@utils.ssh_retryable
 def _sudo_pull_file(
     address: str, remote_src: str, local_dest: str, admin_ssh_key: str | None = None
 ):
@@ -341,17 +360,21 @@ def _sudo_pull_file(
     if admin_ssh_key:
         options = ["-i", admin_ssh_key]
     with Path(local_dest).open("w") as f:
-        _sudo_exec(
-            address,
-            f"sudo test -f {q(remote_src)} && sudo cat -- {q(remote_src)} || true",
-            options=options,
-            stdout=f,
-            stderr=sp.PIPE,
-            stdin=sp.PIPE,
-        ).check_returncode()
+        # A missing file is not an error (nothing deployed yet), but failing to
+        # read an existing one is.
+        _check(
+            _sudo_exec(
+                address,
+                f"sudo test ! -f {q(remote_src)} || sudo cat -- {q(remote_src)}",
+                options=options,
+                stdout=f,
+                stderr=sp.PIPE,
+                stdin=sp.PIPE,
+            )
+        )
 
 
-@utils.retryable
+@utils.ssh_retryable
 def _sudo_push_file(
     address: str,
     local_src,
@@ -361,31 +384,38 @@ def _sudo_push_file(
     admin_ssh_key: str | None = None,
     execute: bool = False,
 ):
-    ts = time.time()
-    rand = random.randint(0, 9999)
-    tmpname = f"/tmp/infrable-push-{ts}.{rand}"
     parent = str(Path(remote_dest).parent)
-    cmd = f"sudo tee -- {q(tmpname)}"  # as root for security
 
-    # Change permissions and ownership before moving to final destination.
+    # The content goes to a private (0600, root) temp file created atomically
+    # by mktemp: a predictable name in /tmp would let a local user on the
+    # remote host plant a symlink, and a default umask would expose secrets.
+    steps = [
+        "tmp=$(sudo mktemp /tmp/infrable-push.XXXXXXXXXX)",
+        "trap 'sudo rm -f -- \"$tmp\"' EXIT",
+        'sudo tee -- "$tmp" >/dev/null',
+    ]
+
+    # Change ownership and permissions before moving to the final destination.
     # Else, you might end up getting locked from the server.
-    if chmod:
-        cmd = f"{cmd} && sudo chmod -- {q(chmod)} {q(tmpname)}"
-
     if chown:
-        cmd = f"{cmd} && sudo chown -- {q(chown)} {q(tmpname)}"
+        steps.append(f'sudo chown -- {q(chown)} "$tmp"')
+    steps.append(f'sudo chmod -- {q(chmod or "644")} "$tmp"')
 
-    cmd += f" && sudo mkdir -p -- {q(parent)}"
-    cmd += f" && sudo mv -f -- {q(tmpname)} {q(remote_dest)}"
+    steps.append(f"sudo mkdir -p -- {q(parent)}")
+    steps.append(f'sudo mv -f -- "$tmp" {q(remote_dest)}')
 
     if execute:
         if not chmod:
-            cmd += f" && sudo chmod u+rx -- {q(remote_dest)}"
-        cmd += f" && sudo -- {q(remote_dest)}"
+            steps.append(f"sudo chmod u+rx -- {q(remote_dest)}")
+        steps.append(f"sudo -- {q(remote_dest)}")
 
     options = None
     if admin_ssh_key:
         options = ["-i", admin_ssh_key]
 
     with Path(local_src).open("r") as f:
-        _sudo_exec(address, cmd, options=options, stdin=f).check_returncode()
+        _check(
+            _sudo_exec(
+                address, " && ".join(steps), options=options, shell="sh", stdin=f
+            )
+        )

@@ -177,3 +177,34 @@ def test_render_undefined_variable_is_an_error(tmp_path):
 
     with pytest.raises(UndefinedError):
         render(path, "h:/x", {})
+
+
+def test_metadata_unknown_key_is_an_error(tmp_path):
+    path = _template(tmp_path, "# ---\n# src: s\n# dest: h:/x\n# chmodd: 644\n# ---\n")
+
+    with pytest.raises(errors.InvalidMetadataError, match="chmodd"):
+        Metadata.parse(path)
+
+
+def test_metadata_missing_src_is_an_error(tmp_path):
+    path = _template(tmp_path, "# ---\n# dest: h:/x\n# ---\n")
+
+    with pytest.raises(errors.InvalidMetadataError, match="missing src"):
+        Metadata.parse(path)
+
+
+def test_metadata_that_is_not_a_mapping(tmp_path):
+    path = _template(tmp_path, "# ---\n# just a string\n# ---\n")
+
+    with pytest.raises(errors.MissingMetadataError):
+        Metadata.parse(path)
+
+
+def test_dest_unknown_key_is_an_error():
+    with pytest.raises(errors.InvalidMetadataError, match="chmodd"):
+        Dest.parse({"loc": "h:/x", "chmodd": "644"})
+
+
+def test_dest_without_loc_is_an_error():
+    with pytest.raises(errors.InvalidMetadataError, match="missing loc"):
+        Dest.parse({"chmod": "644"})

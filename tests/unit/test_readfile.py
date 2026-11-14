@@ -35,3 +35,9 @@ def test_readfile_without_format_returns_raw(tmp_path):
     path.write_text(" raw \n")
 
     assert readfile(path, fmt=None) == " raw \n"
+
+
+def test_readfile_creates_private_files(tmp_path):
+    readfile(tmp_path / "secret")
+
+    assert (tmp_path / "secret").stat().st_mode & 0o777 == 0o600

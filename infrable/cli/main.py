@@ -3,9 +3,9 @@ from typing import Optional
 
 import typer
 
-app = typer.Typer(no_args_is_help=True)
-
 from infrable import IS_PROJECT_DIR, __version__, init
+
+app = typer.Typer(no_args_is_help=True)
 
 
 @app.command()
@@ -52,13 +52,13 @@ if IS_PROJECT_DIR:
     def switches(format: Optional[str] = None, repr: bool = False):
         """List all switches in the infrastructure."""
 
-        for name, switch in infra.switches.items():
+        for name, item in infra.switches.items():
             if format:
-                print(switch.format(name, format=format))
+                print(item.format(name, format=format))
             elif repr:
-                print(f"{name} = {switch.__repr__()}")
+                print(f"{name} = {item.__repr__()}")
             else:
-                print(f"{name} = {switch}")
+                print(f"{name} = {item}")
 
     app.add_typer(files.app, name="files", help="Manage files.")
     app.add_typer(switch.app, name="switch", help="Manage switches.")

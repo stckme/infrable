@@ -1,8 +1,9 @@
+import subprocess as sp
 import threading
 
 import pytest
 
-from infrable import utils
+from infrable import errors, utils
 
 
 def test_item_formatter():
@@ -85,3 +86,62 @@ def test_retryable_gives_up_after_ten_attempts(no_sleep):
     with pytest.raises(ConnectionError, match="always"):
         no_sleep(broken)()
     assert len(calls) == 10
+
+
+def test_item_formatter_is_sandboxed():
+    # Format strings are user input: no reaching into Python internals
+    out = utils.item_formatter("[{a.__class__}]").render(a=1)
+    assert out == "[]"
+
+
+def test_ssh_host_key_options_default(monkeypatch):
+    monkeypatch.delenv("INFRABLE_STRICT_HOST_KEY_CHECKING", raising=False)
+    assert utils.ssh_host_key_options() == ["-o", "StrictHostKeyChecking=accept-new"]
+
+
+@pytest.mark.parametrize("value", ["yes", "no", "off", "ask", "accept-new"])
+def test_ssh_host_key_options_override(monkeypatch, value):
+    monkeypatch.setenv("INFRABLE_STRICT_HOST_KEY_CHECKING", value)
+    assert utils.ssh_host_key_options() == ["-o", f"StrictHostKeyChecking={value}"]
+
+
+def test_ssh_host_key_options_rejects_unknown_value(monkeypatch):
+    monkeypatch.setenv("INFRABLE_STRICT_HOST_KEY_CHECKING", "maybe")
+    with pytest.raises(errors.InvalidHostKeyCheckingError, match="maybe"):
+        utils.ssh_host_key_options()
+
+
+def _failing(code, calls):
+    @utils.ssh_retryable
+    def fn():
+        calls.append(1)
+        raise sp.CalledProcessError(code, "ssh")
+
+    return fn
+
+
+def test_ssh_retryable_retries_connection_errors(no_sleep):
+    calls = []
+    with pytest.raises(sp.CalledProcessError):
+        no_sleep(_failing(255, calls))()
+    assert len(calls) == 5
+
+
+def test_ssh_retryable_does_not_rerun_failed_remote_commands(no_sleep):
+    calls = []
+    with pytest.raises(sp.CalledProcessError):
+        no_sleep(_failing(1, calls))()
+    assert len(calls) == 1
+
+
+def test_ssh_retryable_does_not_retry_other_errors(no_sleep):
+    calls = []
+
+    @utils.ssh_retryable
+    def fn():
+        calls.append(1)
+        raise ValueError("nope")
+
+    with pytest.raises(ValueError):
+        no_sleep(fn)()
+    assert len(calls) == 1

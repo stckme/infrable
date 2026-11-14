@@ -17,11 +17,10 @@ def from_stdin(command: str, workers: Optional[int] = None):
         parts = line.split(maxsplit=1)
         if not parts:
             continue  # blank line
-        host = parts[0].split("@", 1)[-1].strip()
-        if not host:
+        name = parts[0].split("@", 1)[-1].strip()
+        if not name:
             continue
-        for host in infra.filtered_hosts(only=[host]):
-            hosts.append(host)
+        hosts.extend(infra.filtered_hosts(only=[name]))
 
     _execute_batch(hosts, command=command, workers=workers)
 
@@ -93,7 +92,10 @@ for name, host in infra.hosts.items():
 
 def _execute_batch(hosts: Iterable[Host], command: str, workers: int | None):
     hosts = {h.ip: h for h in hosts}.values()
-    fn = lambda host: (host, host.remote()(command, _err_to_out=True))
+
+    def fn(host: Host):
+        return host, host.remote()(command, _err_to_out=True)
+
     with utils.concurrentcontext(fn, hosts, workers=workers) as results:
         for host, result in tqdm(results, total=len(hosts)):
             typer.secho(f"╭ {host}", bold=True)

@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import Callable, TypeVar
 
@@ -17,7 +18,9 @@ def readfile(
     if not path.exists():
         val = init()
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(val)
+        # Files read through here are usually secrets: owner-only by default.
+        with os.fdopen(os.open(path, os.O_WRONLY | os.O_CREAT, 0o600), "w") as f:
+            f.write(val)
     else:
         val = path.read_text()
     if fmt:

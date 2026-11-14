@@ -62,8 +62,8 @@ def test_pull_fetches_remote_content(fake_ssh):
     assert len(calls) == len(_new_files())
     for call in calls:
         assert call["argv"][-2] == "root@127.0.0.1"
-        assert "StrictHostKeyChecking=no" in call["argv"]
-        assert "sudo test -f" in call["argv"][-1]
+        assert "StrictHostKeyChecking=accept-new" in call["argv"]
+        assert "sudo test ! -f" in call["argv"][-1]
 
 
 def test_pull_replaces_stale_old_files(fake_ssh):
@@ -95,13 +95,13 @@ def test_push_yes_pushes_changed_files(fake_ssh):
 
     by_dest = {}
     for call in pushed:
-        cmd = call["argv"][-1]
+        cmd = fake_ssh.script(call)
         dest = cmd.split("sudo mv -f -- ")[1].split()[1]
         assert not dest.startswith("//"), dest
         by_dest[dest] = call
 
     proxy = by_dest["/etc/nginx/proxy_params"]
-    cmd = proxy["argv"][-1]
+    cmd = fake_ssh.script(proxy)
     assert "sudo chmod -- 644" in cmd
     assert "sudo chown -- root:root" in cmd
     assert "sudo mkdir -p -- /etc/nginx" in cmd
@@ -109,7 +109,7 @@ def test_push_yes_pushes_changed_files(fake_ssh):
     assert "proxy_set_header Host $http_host;" in proxy["stdin"]
 
     # Executable templates are chmod-ed and executed
-    robots = by_dest["/root/init/robots.txt.sh"]["argv"][-1]
+    robots = fake_ssh.script(by_dest["/root/init/robots.txt.sh"])
     assert "sudo chmod u+rx -- /root/init/robots.txt.sh" in robots
     assert robots.endswith("&& sudo -- /root/init/robots.txt.sh")
 
@@ -201,7 +201,7 @@ def test_deploy_confirm_pull_only(fake_ssh):
 
     assert "backup:" in out
     assert len(list(paths.backups.glob("*"))) == backups + 1
-    assert any("sudo test -f" in c for c in fake_ssh.commands())
+    assert any("sudo test ! -f" in c for c in fake_ssh.commands())
     assert len(_pushed(fake_ssh)) == 4
 
 
@@ -215,7 +215,7 @@ def test_deploy_confirm_backup_only(fake_ssh):
 
     assert "backup:" in out
     assert len(list(paths.backups.glob("*"))) == backups + 1
-    assert not any("sudo test -f" in c for c in fake_ssh.commands())
+    assert not any("sudo test ! -f" in c for c in fake_ssh.commands())
     assert len(_pushed(fake_ssh)) == 4
 
 
@@ -286,7 +286,7 @@ def test_recover_restores_only_files_that_existed_remotely(fake_ssh):
     pushed = _pushed(fake_ssh)
     assert len(pushed) == 1
     assert pushed[0]["stdin"].endswith("old\n")
-    assert pushed[0]["argv"][-1].split("sudo mv -f -- ")[1].split()[1] == (
+    assert fake_ssh.script(pushed[0]).split("sudo mv -f -- ")[1].split()[1] == (
         "/etc/nginx/proxy_params"
     )
     assert out.count("file is empty") == 3
