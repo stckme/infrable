@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.52
+
+### Fixed
+
+- Rendered templates will preserve ending newlines.
+
 ## 0.1.51
 
 ### Security

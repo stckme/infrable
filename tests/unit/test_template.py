@@ -159,17 +159,18 @@ def test_render_replaces_header_and_renders_body(tmp_path):
 
     out = render(path, "h:/x", {}, name="world")
 
-    assert out.endswith("# ---\nhello world\n")
+    assert out.endswith("# ---\nhello world")
     assert out.startswith("# ---\n# ")
     assert "# dest: h:/x" in out
     assert "{{" not in out
 
 
-def test_render_always_appends_trailing_newline(tmp_path):
-    # Configs like sudoers require a trailing newline
-    path = _template(tmp_path, "# ---\n# src: s\n# dest: h:/x\n# ---\nbody")
+def test_render_does_not_trim_or_add_whitespace(tmp_path):
+    header = "# ---\n# src: s\n# dest: h:/x\n# ---\n"
+    for body in ("body", "body\n", "body\n\n", "\n  body  \n"):
+        path = _template(tmp_path, header + body)
 
-    assert render(path, "h:/x", {}).endswith("body\n")
+        assert render(path, "h:/x", {}).endswith("# ---\n" + body)
 
 
 def test_render_undefined_variable_is_an_error(tmp_path):

@@ -10,7 +10,10 @@ from infrable import errors
 
 
 def _jinja_render(content: str, *args: dict[str, Any], **kwargs: Any) -> str:
-    return JinjaTemplate(content, undefined=StrictUndefined).render(*args, **kwargs)
+    # keep_trailing_newline: never trim the template or the rendered output.
+    return JinjaTemplate(
+        content, undefined=StrictUndefined, keep_trailing_newline=True
+    ).render(*args, **kwargs)
 
 
 @dataclass(frozen=True)
@@ -126,6 +129,4 @@ def render(path: Path, dest_loc: str, *args: dict[str, Any], **kwargs: Any) -> s
     meta = Metadata.parse(path, *args)
     header = meta.clean_header(dest_loc)
     tmpl = path.read_text().replace(meta._raw, header)
-    content = _jinja_render(tmpl, *args, **kwargs)
-
-    return f"{content}\n"  # all config, specially sudoers requires a trailing newline
+    return _jinja_render(tmpl, *args, **kwargs)
